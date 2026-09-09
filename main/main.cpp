@@ -1,87 +1,27 @@
+#include <box2d/math_functions.h>
+#include <box2d/types.h>
 #include <raylib.h>
 #include <box2d/box2d.h>
 #include <assert.h>
 #include <vector>
 
 
-// //------------------------------------------------------------------------------------
-// // Program main entry point
-// //------------------------------------------------------------------------------------
-// int main(void)
-// {
-//     // Initialization
-//     //--------------------------------------------------------------------------------------
-//     const int screenWidth = 800;
-//     const int screenHeight = 450;
-
-//     b2WorldDef worldDef = b2DefaultWorldDef();
-//     worldDef.gravity = (b2Vec2){0.0f, -10.0f};
-
-//     b2WorldId worldId = b2CreateWorld(&worldDef);
-
-//     b2BodyDef groundBodyDef = b2DefaultBodyDef();
-//     groundBodyDef.position = (b2Vec2){0.0f, -10.0f};
-
-//     b2BodyId groundId = b2CreateBody(worldId, &groundBodyDef);
-
-//     b2Polygon groundBox = b2MakeBox(50.0f, 10.0f);
-
-//     b2ShapeDef groundShapeDef = b2DefaultShapeDef();
-//     b2CreatePolygonShape(groundId, &groundShapeDef, &groundBox);
-
-//     InitWindow(screenWidth, screenWidth, "Box2d + Raylib");
-
-//     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
-
-//     // HideCursor();
-
-//     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
-//     //--------------------------------------------------------------------------------------
-
-//     // Main game loop
-//     while (!WindowShouldClose())        // Detect window close button or ESC key
-//     {
-//         //----------------------------------------------------------------------------------
-//         // Draw
-//         //----------------------------------------------------------------------------------
-
-//         BeginDrawing();
-
-//             ClearBackground(DARKGRAY);
-
-//                 DrawText("Hello_World!", 20, 20, 20, GOLD);
-
-//             EndMode2D();
-
-//         EndDrawing();
-
-//         //----------------------------------------------------------------------------------
-//     }
-
-//     // De-Initialization
-//     //--------------------------------------------------------------------------------------
-//     CloseWindow();        // Close window and OpenGL context
-//     //--------------------------------------------------------------------------------------
-
-//     return 0;
-// }
-
-
-
-
-
-
-
-#define WIDTH  480.0
-#define HEIGHT 480.0
-#define BOX_SIZE 10
-
+#define WIDTH  640.0
+#define HEIGHT 640.0
+#define BOX_SIZE 5
+#define BOX_DENCITY 25
+#define RANDOM_SPREAD 75
+#define RANDOM_COLOR (uint8_t)(GetRandomValue(0, 10) * 10 + 155)
 
 
 typedef struct Entity
 {
 	b2BodyId bodyId;
 	b2Vec2 extent;
+	Color color;
+	Entity() {
+		color = { RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR, 255 };
+	}
 } Entity;
 
 void DrawEntity(const Entity* entity)
@@ -93,8 +33,8 @@ void DrawEntity(const Entity* entity)
 	float radians = b2Rot_GetAngle(rotation);
 
 	Vector2 ps = {p.x, p.y};
-	// DrawEx(entity->texture, ps, RAD2DEG * radians, 1.0f, WHITE);
-	DrawRectanglePro({p.x, p.y, BOX_SIZE, BOX_SIZE}, {0, 0}, RAD2DEG * radians, MAGENTA);
+
+	DrawRectanglePro({p.x, p.y, BOX_SIZE, BOX_SIZE}, {0, 0}, RAD2DEG * radians, entity->color);
 
 	// I used these circles to ensure the coordinates are correct
 	// DrawCircleV(ps, 5.0f, BLACK);
@@ -106,12 +46,14 @@ void DrawEntity(const Entity* entity)
 	// DrawCircleV(ps, 5.0f, RED);
 }
 
-#define GROUND_COUNT 45
+#define GROUND_COUNT 60
 #define BOX_COUNT 10
 
 int main(void)
 {
 	InitWindow(WIDTH, HEIGHT, "box2d-raylib");
+
+  SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
 
 	SetTargetFPS(60);
 
@@ -133,23 +75,24 @@ int main(void)
 	b2Polygon groundPolygon = b2MakeBox(groundExtent.x, groundExtent.y);
 	b2Polygon boxPolygon = b2MakeBox(boxExtent.x, boxExtent.y);
 
-	Entity groundEntities[GROUND_COUNT] = { 0 };
+	Entity groundEntities[GROUND_COUNT] = { Entity() };
 	for (int i = 0; i < GROUND_COUNT; ++i)
 	{
 		Entity* entity = groundEntities + i;
 		b2BodyDef bodyDef = b2DefaultBodyDef();
-		bodyDef.position = (b2Vec2){ (2.0f * i + 2.0f) * groundExtent.x, (float)HEIGHT - groundExtent.y - 100.0f};
+		bodyDef.position = (b2Vec2){ groundExtent.x * 2 * i + 100.0f, (float)HEIGHT - groundExtent.y - 10.0f};
 
 		// I used this rotation to test the world to screen transformation
 		//bodyDef.rotation = b2MakeRot(0.25f * b2_pi * i);
 
+		bodyDef.type = b2_kinematicBody;
 		entity->bodyId = b2CreateBody(worldId, &bodyDef);
 		entity->extent = groundExtent;
 		b2ShapeDef shapeDef = b2DefaultShapeDef();
 		b2CreatePolygonShape(entity->bodyId, &shapeDef, &groundPolygon);
 	}
 
-	Entity boxEntities[BOX_COUNT] = { 0 };
+	Entity boxEntities[BOX_COUNT] = { Entity() };
 	int boxIndex = 0;
 	for (int i = 0; i < 4; ++i)
 	{
@@ -171,10 +114,8 @@ int main(void)
 
 			boxIndex += 1;
 		}
-
-
 	}
-std::vector<Entity> userEntities;
+	std::vector<Entity> userEntities;
 
 	bool pause = false;
 
@@ -186,19 +127,24 @@ std::vector<Entity> userEntities;
 		}
 		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
 		{
-    	Entity* entity;
-    	b2BodyDef bodyDef = b2DefaultBodyDef();
-    	// bodyDef.position = (b2Vec2){ (float)GetMouseX(), (float)GetMouseY()};
-    	bodyDef.position = (b2Vec2){ (float)GetMouseX(), (float)GetMouseY()};
+  		b2Vec2 mouse_pos = { (float)GetMouseX(), (float)GetMouseY() };
 
-    	// I used this rotation to test the world to screen transformation
-    	//bodyDef.rotation = b2MakeRot(0.25f * b2_pi * i);
+  		for (int i = 0; i < BOX_DENCITY; ++i)
+  		{
+				float y = mouse_pos.y - 0.5 * boxExtent.y + GetRandomValue(-RANDOM_SPREAD, RANDOM_SPREAD);
+				float x = mouse_pos.x - 0.5 * boxExtent.x + GetRandomValue(-RANDOM_SPREAD, RANDOM_SPREAD);
 
-    	entity->bodyId = b2CreateBody(worldId, &bodyDef);
-    	entity->extent = groundExtent;
-    	b2ShapeDef shapeDef = b2DefaultShapeDef();
-    	b2CreatePolygonShape(entity->bodyId, &shapeDef, &groundPolygon);
-    	userEntities.push_back(*entity);
+				Entity entity = Entity();
+				b2BodyDef bodyDef = b2DefaultBodyDef();
+				bodyDef.type = b2_dynamicBody;
+				bodyDef.position = (b2Vec2){ x, y };
+				entity.bodyId = b2CreateBody(worldId, &bodyDef);
+				entity.extent = boxExtent;
+				b2ShapeDef shapeDef = b2DefaultShapeDef();
+				b2CreatePolygonShape(entity.bodyId, &shapeDef, &boxPolygon);
+
+				userEntities.push_back(entity);
+			}
 		}
 
 		if (pause == false)
@@ -215,8 +161,41 @@ std::vector<Entity> userEntities;
 		int textWidth = MeasureText("Hello Box2D!", fontSize);
 		DrawText(message, (WIDTH - textWidth) / 2, 50, fontSize, LIGHTGRAY);
 
+		static float step = 0;
+		static bool da = false;
+		step++;
 		for (int i = 0; i < GROUND_COUNT; ++i)
 		{
+			Entity* cur_ent = groundEntities + i;
+			if (step < 20) {
+				if (da == false)
+					b2Body_SetLinearVelocity( cur_ent->bodyId, { 0.0f, -1000.0f } );
+				else
+					b2Body_SetLinearVelocity( cur_ent->bodyId, { 0.0f, 1000.0f } );
+			}
+			else {
+				da = !da;
+				step = 0;
+			}
+			// static float timeStep = 1.0f / 60.0f;
+			// b2Transform target = { { (float)i * BOX_SIZE, step }, 0 };
+			// b2Body_SetTargetTransform( cur_ent->bodyId, target, timeStep);
+
+			// b2Body_SetType( m_platformId, b2_kinematicBody );
+			// b2Body_SetAngularVelocity( m_platformId, 0.0f );
+
+			// b2Body_SetType( m_secondAttachmentId, b2_kinematicBody );
+			// b2Body_SetLinearVelocity( m_secondAttachmentId, b2Vec2_zero );
+			// b2Body_SetAngularVelocity( m_secondAttachmentId, 0.0f );
+
+			// b2Body_SetType( m_secondPayloadId, b2_kinematicBody );
+			// b2Body_SetType( m_touchingBodyId, b2_kinematicBody );
+			// b2Body_SetType( m_floatingBodyId, b2_kinematicBody );
+
+
+			// b2Vec2 p = b2Body_GetWorldPoint(cur_ent->bodyId, (b2Vec2) { -cur_ent->extent.x, -cur_ent->extent.y });
+
+			// Vector2 ps = {p.x, p.y};
 			DrawEntity(groundEntities + i);
 		}
 
