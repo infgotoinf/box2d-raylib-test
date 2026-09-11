@@ -1,8 +1,9 @@
 {pkgs ? import <nixpkgs> {}}:
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
-    raylib
-    box2d
+    # raylib
+    # box2d
+    # imgui
 
     libGL
 

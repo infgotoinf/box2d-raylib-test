@@ -1,9 +1,13 @@
-#include <box2d/math_functions.h>
-#include <box2d/types.h>
-#include <raylib.h>
-#include <box2d/box2d.h>
+#include "box2d/box2d.h"
+#include "raylib.h"
+#include <map>
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+
 #include <assert.h>
+
 #include <vector>
+
 
 
 #define WIDTH  640.0
@@ -12,6 +16,11 @@
 #define BOX_DENCITY 25
 #define RANDOM_SPREAD 75
 #define RANDOM_COLOR (uint8_t)(GetRandomValue(0, 10) * 10 + 155)
+#define GROUND_COUNT 60
+#define BOX_COUNT 10
+#define TEXT_SIZE 18
+#define BUTTON_MARGIN 2
+
 
 
 typedef struct Entity
@@ -37,17 +46,24 @@ void DrawEntity(const Entity* entity)
 	DrawRectanglePro({p.x, p.y, BOX_SIZE, BOX_SIZE}, {0, 0}, RAD2DEG * radians, entity->color);
 
 	// I used these circles to ensure the coordinates are correct
-	// DrawCircleV(ps, 5.0f, BLACK);
-	// p = b2Body_GetWorldPoint(entity->bodyId, (b2Vec2){0.0f, 0.0f});
-	// ps = (Vector2){ p.x, p.y };
-	// DrawCircleV(ps, 5.0f, BLUE);
-	// p = b2Body_GetWorldPoint(entity->bodyId, (b2Vec2){ entity->extent.x, entity->extent.y });
-	// ps = (Vector2){ p.x, p.y };
-	// DrawCircleV(ps, 5.0f, RED);
 }
 
-#define GROUND_COUNT 60
-#define BOX_COUNT 10
+
+void GuiButton(const char* label, Vector2 coordinats, float width) {
+	GuiButton({ coordinats.x, coordinats.y, width, TEXT_SIZE }, label);
+}
+
+void GuiMenu(Vector2 coordinats, std::vector<const char*> buttons, float width) {
+	GuiPanel({ coordinats.x, coordinats.y, width, (float)buttons.size() * (TEXT_SIZE + BUTTON_MARGIN) + BUTTON_MARGIN }, nullptr);
+	for (int i = 0; i < buttons.size(); ++i)
+	{
+		GuiButton(buttons[i], { coordinats.x + BUTTON_MARGIN
+		                      , coordinats.y + (TEXT_SIZE + BUTTON_MARGIN) * i + BUTTON_MARGIN}
+		                      , width - BUTTON_MARGIN * 2);
+	}
+}
+
+
 
 int main(void)
 {
@@ -119,6 +135,10 @@ int main(void)
 
 	bool pause = false;
 
+
+	Vector2 menu_coordinats;
+	bool show_menu = false;
+
 	while (!WindowShouldClose())
 	{
 		if (IsKeyPressed(KEY_P))
@@ -145,6 +165,16 @@ int main(void)
 
 				userEntities.push_back(entity);
 			}
+		}
+		if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
+		{
+  		menu_coordinats =  { (float)GetMouseX(), (float)GetMouseY() };
+
+  		show_menu = true;
+		}
+		else if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+		{
+			show_menu = false;
 		}
 
 		if (pause == false)
@@ -206,6 +236,15 @@ int main(void)
 		for (auto e : userEntities)
 		{
 			DrawEntity(&e);
+		}
+
+		if (show_menu) {
+			std::vector<const char*> buttons {
+			  "Lol"
+			 ,"Cool"
+			};
+			GuiMenu(menu_coordinats, buttons, TEXT_SIZE * 8);
+  		// GuiGroupBox({menu_coordinats.x, menu_coordinats.y, 60, 60}, "lol");
 		}
 
 		EndDrawing();
