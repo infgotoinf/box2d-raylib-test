@@ -1,6 +1,6 @@
 #include "box2d/box2d.h"
 #include "raylib.h"
-#include <map>
+#include <cstdint>
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
@@ -18,20 +18,59 @@
 #define RANDOM_COLOR (uint8_t)(GetRandomValue(0, 10) * 10 + 155)
 #define GROUND_COUNT 60
 #define BOX_COUNT 10
-#define TEXT_SIZE 18
-#define BUTTON_MARGIN 2
+#define TEXT_SIZE 24
+#define BUTTON_MARGIN 0
 
+enum ShapeProperties : uint8_t {
+	X
+ ,Y
+ ,RADIUS
+};
 
+enum Shape : uint8_t {
+	RECTANGLE,
+	TRIANGLE,
+	CIRCLE,
+	RECTANGLE_EX,
+};
 
-typedef struct Entity
+enum EntityType : uint8_t {
+	NORMAL,
+	KILLING,
+	FINISH,
+};
+
+// enum : uint8_t {
+// 	STATIC,
+// 	MOVING,
+// 	ROTATING,
+// };
+
+struct Entity
 {
 	b2BodyId bodyId;
-	b2Vec2 extent;
+	// b2Vec2 extent;
 	Color color;
+	Shape shape;
+	EntityType type;
+	int shapeProperties[];
+
 	Entity() {
 		color = { RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR, 255 };
 	}
-} Entity;
+	int GetProperty(int property) {
+		return shapeProperties[property];
+	}
+	bool SetProperty() {
+		return true;
+	}
+};
+
+struct Button
+{
+	const char* label;
+	bool is_enabled = true;
+};
 
 void DrawEntity(const Entity* entity)
 {
@@ -48,18 +87,27 @@ void DrawEntity(const Entity* entity)
 	// I used these circles to ensure the coordinates are correct
 }
 
+#define DEFAULT_COLOR_STATIC (uint8_t)(200, 200, 200)
+#define RECTINGLE_SIZE 25
+void CreateRectangle() {
+
+}
 
 void GuiButton(const char* label, Vector2 coordinats, float width) {
 	GuiButton({ coordinats.x, coordinats.y, width, TEXT_SIZE }, label);
 }
 
-void GuiMenu(Vector2 coordinats, std::vector<const char*> buttons, float width) {
+void GuiMenu(Vector2 coordinats, std::vector<Button> buttons, float width) {
 	GuiPanel({ coordinats.x, coordinats.y, width, (float)buttons.size() * (TEXT_SIZE + BUTTON_MARGIN) + BUTTON_MARGIN }, nullptr);
 	for (int i = 0; i < buttons.size(); ++i)
 	{
-		GuiButton(buttons[i], { coordinats.x + BUTTON_MARGIN
-		                      , coordinats.y + (TEXT_SIZE + BUTTON_MARGIN) * i + BUTTON_MARGIN}
-		                      , width - BUTTON_MARGIN * 2);
+		if (buttons[i].is_enabled)
+			GuiEnable();
+		else
+			GuiDisable();
+		GuiButton(buttons[i].label, { coordinats.x + BUTTON_MARGIN
+				                      , coordinats.y + (TEXT_SIZE + BUTTON_MARGIN) * i + BUTTON_MARGIN}
+				                      , width - BUTTON_MARGIN * 2);
 	}
 }
 
@@ -68,6 +116,11 @@ void GuiMenu(Vector2 coordinats, std::vector<const char*> buttons, float width) 
 int main(void)
 {
 	InitWindow(WIDTH, HEIGHT, "box2d-raylib");
+
+	// GuiLoadStyle("resources/style.rgs");
+	GuiSetStyle(BUTTON, TEXT_PADDING, 8);
+	GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
+	GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
 
   SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
 
@@ -239,9 +292,11 @@ int main(void)
 		}
 
 		if (show_menu) {
-			std::vector<const char*> buttons {
-			  "Lol"
-			 ,"Cool"
+			std::vector<Button> buttons {
+			  { "Paste", 0 }
+			 ,{ "Rectangle" }
+			 ,{ "Triangle" }
+			 ,{ "Circle" }
 			};
 			GuiMenu(menu_coordinats, buttons, TEXT_SIZE * 8);
   		// GuiGroupBox({menu_coordinats.x, menu_coordinats.y, 60, 60}, "lol");

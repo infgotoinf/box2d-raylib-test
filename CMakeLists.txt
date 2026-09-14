@@ -44,9 +44,9 @@ target_link_libraries(game
     X11
 )
 
-# add_custom_command(
-#   TARGET game POST_BUILD
-#   COMMAND
-#     ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets
-#     $<TARGET_FILE_DIR:game>/assets
-# )
+add_custom_command(
+  TARGET game POST_BUILD
+  COMMAND
+    ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources
+    $<TARGET_FILE_DIR:game>/resources
+)
