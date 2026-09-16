@@ -17,6 +17,7 @@ add_executable(game)
 target_sources(game
   PRIVATE
     main/main.cpp
+    main/classes.cpp
 
   PUBLIC
     FILE_SET headers
@@ -30,6 +31,8 @@ target_sources(game
       external/raylib/src/raylib.h
       external/raygui/raygui.h
       external/box2d/include/box2d/box2d.h
+      main/include/classes.hpp
+      main/include/config.hpp
 )
 
 target_link_libraries(game
@@ -47,6 +50,6 @@ target_link_libraries(game
 # add_custom_command(
 #   TARGET game POST_BUILD
 #   COMMAND
-#     ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets
-#     $<TARGET_FILE_DIR:game>/assets
+#     ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources
+#     $<TARGET_FILE_DIR:game>/resources
 # )
