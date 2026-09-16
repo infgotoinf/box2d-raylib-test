@@ -1,7 +1,10 @@
+#include "box2d/box2d.h"
 #include "raylib.h"
 
 #include "include/classes.hpp"
 #include "include/config.hpp"
+#include <memory>
+#include <vector>
 
 
 
@@ -16,6 +19,8 @@ int main(void)
     LBR::World world = LBR::World();
 
     world.CreateWindow();
+
+    std::vector<std::unique_ptr<LBR::Entity>> rain_entities;
 
     while (!WindowShouldClose())
     {
@@ -49,18 +54,50 @@ int main(void)
             world.menu_coordinats = { (float)GetMouseX(), (float)GetMouseY() };
             world.show_menu = true;
         }
+        if (world.pause == false)
+        {
+            float deltaTime = GetFrameTime();
+            b2World_Step(world.world_id, deltaTime, 4);
+        }
 
-        // if (pause == false)
-        // {
-        //     float deltaTime = GetFrameTime();
-        //     b2World_Step(world_id, deltaTime, 4);
-        // }
+        static double timestamp = GetTime();
+        if (GetTime() - timestamp > 0.1f) {
+            float y = 0;
+            float x = RAIN_SIZE * 0.5 + GetRandomValue(0, WINDOW_WIDTH);
+
+            rain_entities.push_back(
+                    std::make_unique<LBR::EntityRectangle>(
+                          world.world_id
+                        , LBR::NORMAL
+                        , LBR::DYNAMIC
+                        , x - RAIN_SIZE / 2
+                        , y - RAIN_SIZE / 2 + RAIN_SIZE
+                        , RAIN_SIZE
+                        , RAIN_SIZE
+            ));
+            timestamp = GetTime();
+        }
 
         BeginDrawing();
         {
             ClearBackground(COLOR_BG);
 
             world.DrawEntities();
+
+            for (auto& entity : rain_entities)
+            {
+                switch (entity->shape)
+                {
+                case LBR::RECTANGLE:
+                    dynamic_cast<LBR::EntityRectangle*>(entity.get())->Draw();
+                    break;
+                case LBR::TRIANGLE:
+                    break;
+                case LBR::CIRCLE:
+                default:
+                    break;
+                }
+            }
 
             if (world.show_menu) {
                 std::vector<LBR::Button> buttons {

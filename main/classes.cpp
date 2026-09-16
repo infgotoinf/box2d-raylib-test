@@ -13,22 +13,30 @@
 
 namespace LBR
 {
-    EntityRectangle::EntityRectangle(b2WorldId world_id, EntityType type, float x, float y, float width, float height, Color color = COLOR_ENTITY)
-            : x(x / 2), y(y / 2), width(width), height(height)
+    EntityRectangle::EntityRectangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float width, float height, Color color)
+            : x(x), y(y), width(width), height(height)
     {
         this->color = color;
+        this->behaviour = behaviour;
         this->type = type;
         this->shape = RECTANGLE;
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.position = (b2Vec2){ this->x, this->y };
 
-        b2Polygon groundPolygon = b2MakeBox(this->x, this->y);
+        b2Polygon polygon = b2MakeBox(width * 0.5f, height * 0.5f);
 
-        bodyDef.type = b2_kinematicBody;
+        switch (type) {
+        case STATIC:
+            bodyDef.type = b2_kinematicBody;
+            break;
+        default:
+            bodyDef.type = b2_dynamicBody;
+        }
+
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
-        b2CreatePolygonShape(bodyId, &shapeDef, &groundPolygon);
+        b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
     }
 
 
@@ -36,7 +44,7 @@ namespace LBR
     {
         // The boxes were created centered on the bodies, but raylib draws textures starting at the top left corner.
         // b2Body_GetWorldPoint gets the top left corner of the box accounting for rotation.
-        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { x, y });
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -width / 2, -height / 2 });
         b2Rot rotation = b2Body_GetRotation(bodyId);
         float radians = b2Rot_GetAngle(rotation);
 
@@ -65,6 +73,11 @@ namespace LBR
     }
 
 
+    World::~World() {
+        b2DestroyWorld(world_id);
+    }
+
+
     World* World::GetIstance()
     {
         if (instance == nullptr) {
@@ -78,7 +91,7 @@ namespace LBR
     {
         SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
 
-        InitWindow(WIDTH, HEIGHT, "Lucky Ball Race");
+        InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Lucky Ball Race");
 
         GuiSetStyle(BUTTON, TEXT_PADDING, 8);
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
@@ -100,16 +113,15 @@ namespace LBR
     }
 
 
-    #define DEFAULT_RECTANGLE_WIDTH 50.0f
-    #define DEFAULT_RECTANGLE_HEIGHT 20.0f
     void World::SpawnRectangle(const float x, const float y)
     {
         entities.push_back(
                 std::make_unique<EntityRectangle>(
                           world_id
                         , LBR::NORMAL
-                        , x - DEFAULT_RECTANGLE_WIDTH / 2
-                        , y - DEFAULT_RECTANGLE_HEIGHT / 2
+                        , LBR::STATIC
+                        , x
+                        , y
                         , DEFAULT_RECTANGLE_WIDTH
                         , DEFAULT_RECTANGLE_HEIGHT
         ));

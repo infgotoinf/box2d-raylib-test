@@ -1,8 +1,8 @@
 #pragma once
 
 
-#define WIDTH  640.0
-#define HEIGHT 640.0
+#define WINDOW_WIDTH  640.0f
+#define WINDOW_HEIGHT 640.0f
 // #define RANDOM_SPREAD 75
 // #define RANDOM_COLOR (uint8_t)(GetRandomValue(0, 10) * 10 + 155)
 // #define DEFAULT_COLOR (Color){ RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR, 255 }
@@ -27,3 +27,7 @@
 // #define GUI_COLOR_BUTTON_PUSHED_BG     GRAY
 #define GUI_TEXT_SIZE 24
 #define GUI_BUTTON_MARGIN 0
+
+#define DEFAULT_RECTANGLE_WIDTH 100.0f
+#define DEFAULT_RECTANGLE_HEIGHT 50.0f
+#define RAIN_SIZE 15.0f

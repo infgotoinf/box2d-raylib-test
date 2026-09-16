@@ -8,37 +8,33 @@
 #include <memory>
 #include <vector>
 
+#include "config.hpp"
+
 
 
 namespace LBR
 {
 
-    enum ShapeProperties : uint8_t {
-        X
-       ,Y
-       ,RADIUS
-    };
-
-
-    enum Shape : uint8_t {
+    enum EntityShape : uint8_t {
         RECTANGLE,
         TRIANGLE,
         CIRCLE,
     };
 
 
-    enum EntityType : uint8_t {
+    enum EntityBehaviour : uint8_t {
         NORMAL,
         KILLING,
         FINISH,
     };
 
 
-    // enum : uint8_t {
-    //     STATIC,
-    //     MOVING,
-    //     ROTATING,
-    // };
+    enum EntityType : uint8_t {
+        STATIC,
+        DYNAMIC,
+        MOVING,
+        ROTATING,
+    };
 
 
 
@@ -47,7 +43,8 @@ namespace LBR
     public:
         b2BodyId bodyId;
         Color color;
-        Shape shape;
+        EntityShape shape;
+        EntityBehaviour behaviour;
         EntityType type;
 
         virtual void Draw() = 0;
@@ -63,7 +60,7 @@ namespace LBR
         float width;
         float height;
 
-        EntityRectangle(b2WorldId world_id, EntityType type, float x, float y, float width, float height, Color color);
+        EntityRectangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float width, float height, Color color = COLOR_ENTITY);
         void Draw() override;
         void ChangeCoordinats(float x, float y) override;
     };
@@ -102,8 +99,11 @@ namespace LBR
         std::unique_ptr<Entity> selected_item;
         Vector2 menu_coordinats;
         bool show_menu = false;
+        bool pause = false;
 
         World();
+        ~World();
+        World(const World& obj) = delete;
         static World* GetIstance();
         static void CreateWindow();
         void CopyEntity(const float x, const float y);
