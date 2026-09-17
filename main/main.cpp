@@ -47,7 +47,6 @@ int main(void)
             switch (GetRandomValue(LBR::RECTANGLE, LBR::CIRCLE))
             {
             case LBR::RECTANGLE:
-            default:
                 rain_entities.push_back(
                         std::make_unique<LBR::EntityRectangle>(
                               world.world_id
@@ -57,6 +56,17 @@ int main(void)
                             , y - RAIN_RECTANGLE_SIZE / 2 + RAIN_RECTANGLE_SIZE
                             , RAIN_RECTANGLE_SIZE
                             , RAIN_RECTANGLE_SIZE
+                ));
+                break;
+            case LBR::TRIANGLE:
+                rain_entities.push_back(
+                        std::make_unique<LBR::EntityTriangle>(
+                              world.world_id
+                            , LBR::NORMAL
+                            , LBR::DYNAMIC
+                            , Vector2 {x - RAIN_RECTANGLE_SIZE / 2, y + RAIN_RECTANGLE_SIZE }
+                            , Vector2 {x, y}
+                            , Vector2 {x + RAIN_RECTANGLE_SIZE / 2, y + RAIN_RECTANGLE_SIZE }
                 ));
                 break;
             case LBR::CIRCLE:
@@ -70,6 +80,8 @@ int main(void)
                             , RAIN_CIRCLE_SIZE
                 ));
                 break;
+            default:
+                exit(1);
             }
             timestamp = GetTime();
         }
@@ -102,7 +114,7 @@ int main(void)
                     { "Copy"     , &LBR::World::CopyEntity, 0 }
                    ,{ "Paste"    , &LBR::World::PasteEntity, 0 }
                    ,{ "Rectangle", &LBR::World::SpawnRectangle }
-                   ,{ "Triangle" , &LBR::World::SpawnRectangle }
+                   ,{ "Triangle" , &LBR::World::SpawnTriangle }
                    ,{ "Circle"   , &LBR::World::SpawnCircle }
                 };
 

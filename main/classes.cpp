@@ -6,6 +6,7 @@
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
 #include "raylib.h"
+#include <mmintrin.h>
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
@@ -58,6 +59,60 @@ namespace LBR
     {
         this->x = x;
         this->y = y;
+    }
+
+
+    EntityTriangle::EntityTriangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, Vector2 v1, Vector2 v2, Vector2 v3, Color color)
+            : v1(v1), v2(v2), v3(v3)
+    {
+        this->color = color;
+        this->behaviour = behaviour;
+        this->type = type;
+        this->shape = TRIANGLE;
+
+        b2BodyDef bodyDef = b2DefaultBodyDef();
+        bodyDef.position = (b2Vec2){ v1.x, v1.y };
+
+
+        // b2Vec2 points[] = {
+        //     b2Vec2 {-10.0f, 0.0f}
+        //     , b2Vec2 {10.0f, 0.0f}
+        //     , b2Vec2 {0.0f, 10.0f}
+        // };
+        b2Vec2 points[] = {{0, 0}, {v2.x - v1.x, v2.y - v1.y}, {v3.x - v1.x, v3.y - v1.y}};
+        b2Hull hull = b2ComputeHull(points, 3);
+        float radius = 0.0f;
+        b2Polygon polygon = b2MakePolygon(&hull, radius);
+
+        switch (type) {
+        case STATIC:
+            bodyDef.type = b2_staticBody;
+            break;
+        default:
+            bodyDef.type = b2_dynamicBody;
+        }
+
+        bodyId = b2CreateBody(world_id, &bodyDef);
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+        b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
+    }
+
+
+    void EntityTriangle::Draw()
+    {
+        b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+        b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x - v1.x, v2.y - v1.y });
+        b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x - v1.x, v3.y - v1.y });
+
+        DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
+        DrawTriangle({p2.x, p2.y}, {p1.x, p1.y}, {p3.x, p3.y}, color);
+        DrawTriangle({p3.x, p3.y}, {p1.x, p1.y}, {p2.x, p2.y}, color);
+    }
+
+
+    void EntityTriangle::ChangeCoordinats(float x, float y)
+    {
+        this->v1 = {x, y};
     }
 
 
@@ -176,6 +231,20 @@ namespace LBR
                         , y
                         , DEFAULT_RECTANGLE_WIDTH
                         , DEFAULT_RECTANGLE_HEIGHT
+        ));
+    }
+
+
+    void World::SpawnTriangle(const float x, const float y)
+    {
+        entities.push_back(
+                std::make_unique<EntityTriangle>(
+                          world_id
+                        , LBR::NORMAL
+                        , LBR::STATIC
+                        , Vector2 {x - DEFAULT_RECTANGLE_WIDTH / 2, y + DEFAULT_RECTANGLE_HEIGHT}
+                        , Vector2 {x, y}
+                        , Vector2 {x + DEFAULT_RECTANGLE_WIDTH / 2, y + DEFAULT_RECTANGLE_HEIGHT}
         ));
     }
 
