@@ -26,6 +26,7 @@ pkgs.mkShell {
   ];
 
   CMAKE_CXX_COMPILER_LAUNCHER = "ccache";
+  CMAKE_GENERATOR = "Ninja";
 
   # Audio dependencies
   LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [pkgs.alsa-lib];

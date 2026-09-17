@@ -28,27 +28,6 @@ int main(void)
         // {
         //     pause = !pause;
         // }
-        // if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
-        // {
-        //     b2Vec2 mouse_pos = { (float)GetMouseX(), (float)GetMouseY() };
-
-        //     for (int i = 0; i < BOX_DENCITY; ++i)
-        //     {
-        //         float y = mouse_pos.y - 0.5 * boxExtent.y + GetRandomValue(-RANDOM_SPREAD, RANDOM_SPREAD);
-        //         float x = mouse_pos.x - 0.5 * boxExtent.x + GetRandomValue(-RANDOM_SPREAD, RANDOM_SPREAD);
-
-        //         Entity entity = Entity();
-        //         b2BodyDef bodyDef = b2DefaultBodyDef();
-        //         bodyDef.type = b2_dynamicBody;
-        //         bodyDef.position = (b2Vec2){ x, y };
-        //         entity.bodyId = b2CreateBody(world_id, &bodyDef);
-        //         entity.extent = boxExtent;
-        //         b2ShapeDef shapeDef = b2DefaultShapeDef();
-        //         b2CreatePolygonShape(entity.bodyId, &shapeDef, &boxPolygon);
-
-        //         userEntities.push_back(entity);
-        //     }
-        // }
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
         {
             world.menu_coordinats = { (float)GetMouseX(), (float)GetMouseY() };
@@ -56,25 +35,53 @@ int main(void)
         }
         if (world.pause == false)
         {
-            float deltaTime = GetFrameTime();
-            b2World_Step(world.world_id, deltaTime, 4);
+            b2World_Step(world.world_id, GetFrameTime(), 4);
         }
 
         static double timestamp = GetTime();
         if (GetTime() - timestamp > 0.1f) {
             float y = 0;
-            float x = RAIN_SIZE * 0.5 + GetRandomValue(0, WINDOW_WIDTH);
+            float x = GetRandomValue(0, WINDOW_WIDTH);
 
-            rain_entities.push_back(
-                    std::make_unique<LBR::EntityRectangle>(
-                          world.world_id
-                        , LBR::NORMAL
-                        , LBR::DYNAMIC
-                        , x - RAIN_SIZE / 2
-                        , y - RAIN_SIZE / 2 + RAIN_SIZE
-                        , RAIN_SIZE
-                        , RAIN_SIZE
-            ));
+            switch (GetRandomValue(LBR::RECTANGLE, LBR::CIRCLE))
+            {
+            case LBR::RECTANGLE:
+                rain_entities.push_back(
+                        std::make_unique<LBR::EntityRectangle>(
+                              world.world_id
+                            , LBR::NORMAL
+                            , LBR::DYNAMIC
+                            , x - RAIN_RECTANGLE_SIZE / 2
+                            , y - RAIN_RECTANGLE_SIZE / 2 + RAIN_RECTANGLE_SIZE
+                            , RAIN_RECTANGLE_SIZE
+                            , RAIN_RECTANGLE_SIZE
+                ));
+                break;
+            case LBR::TRIANGLE:
+                rain_entities.push_back(
+                        std::make_unique<LBR::EntityTriangle>(
+                              world.world_id
+                            , LBR::NORMAL
+                            , LBR::DYNAMIC
+                            , Vector2 {x - RAIN_RECTANGLE_SIZE / 2, y + RAIN_RECTANGLE_SIZE }
+                            , Vector2 {x, y}
+                            , Vector2 {x + RAIN_RECTANGLE_SIZE / 2, y + RAIN_RECTANGLE_SIZE }
+                ));
+                break;
+            case LBR::CIRCLE:
+                rain_entities.push_back(
+                        std::make_unique<LBR::EntityCircle>(
+                              world.world_id
+                            , LBR::NORMAL
+                            , LBR::DYNAMIC
+                            , x - RAIN_CIRCLE_SIZE / 2
+                            , y - RAIN_CIRCLE_SIZE / 2 + RAIN_CIRCLE_SIZE
+                            , RAIN_CIRCLE_SIZE
+                ));
+                break;
+            default:
+                exit(1);
+            }
             timestamp = GetTime();
         }
 
@@ -92,8 +99,10 @@ int main(void)
                     dynamic_cast<LBR::EntityRectangle*>(entity.get())->Draw();
                     break;
                 case LBR::TRIANGLE:
+                    dynamic_cast<LBR::EntityTriangle*>(entity.get())->Draw();
                     break;
                 case LBR::CIRCLE:
+                    dynamic_cast<LBR::EntityCircle*>(entity.get())->Draw();
                 default:
                     break;
                 }
@@ -104,8 +113,8 @@ int main(void)
                     { "Copy"     , &LBR::World::CopyEntity, 0 }
                    ,{ "Paste"    , &LBR::World::PasteEntity, 0 }
                    ,{ "Rectangle", &LBR::World::SpawnRectangle }
-                   ,{ "Triangle" , &LBR::World::SpawnRectangle }
-                   ,{ "Circle"   , &LBR::World::SpawnRectangle }
+                   ,{ "Triangle" , &LBR::World::SpawnTriangle }
+                   ,{ "Circle"   , &LBR::World::SpawnCircle }
                 };
 
                 if (world.GuiMenu(buttons, world.menu_coordinats.x, world.menu_coordinats.y, GUI_TEXT_SIZE * 8)
