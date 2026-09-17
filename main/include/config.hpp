@@ -3,6 +3,8 @@
 
 #define WINDOW_WIDTH  640.0f
 #define WINDOW_HEIGHT 640.0f
+#define FPS 60
+#define PIXELS_PER_METER 64
 // #define RANDOM_SPREAD 75
 // #define RANDOM_COLOR (uint8_t)(GetRandomValue(0, 10) * 10 + 155)
 // #define DEFAULT_COLOR (Color){ RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR, 255 }

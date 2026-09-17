@@ -35,8 +35,7 @@ int main(void)
         }
         if (world.pause == false)
         {
-            float deltaTime = GetFrameTime();
-            b2World_Step(world.world_id, deltaTime, 4);
+            b2World_Step(world.world_id, GetFrameTime(), 4);
         }
 
         static double timestamp = GetTime();

@@ -16,6 +16,19 @@
 
 namespace LBR
 {
+    void defineType(b2BodyDef* bodyDef, EntityType type) {
+        switch (type) {
+        case STATIC:
+            bodyDef->type = b2_kinematicBody;
+            break;
+        default:
+            bodyDef->type = b2_dynamicBody;
+            // Can make things slow if overused, tho I'm not planing to rely on
+            // it that much
+            bodyDef->isBullet = true;
+        }
+    }
+
     EntityRectangle::EntityRectangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float width, float height, Color color)
             : x(x), y(y), width(width), height(height)
     {
@@ -29,13 +42,7 @@ namespace LBR
 
         b2Polygon polygon = b2MakeBox(width * 0.5f, height * 0.5f);
 
-        switch (type) {
-        case STATIC:
-            bodyDef.type = b2_kinematicBody;
-            break;
-        default:
-            bodyDef.type = b2_dynamicBody;
-        }
+        defineType(&bodyDef, type);
 
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -84,13 +91,7 @@ namespace LBR
         float radius = 0.0f;
         b2Polygon polygon = b2MakePolygon(&hull, radius);
 
-        switch (type) {
-        case STATIC:
-            bodyDef.type = b2_staticBody;
-            break;
-        default:
-            bodyDef.type = b2_dynamicBody;
-        }
+        defineType(&bodyDef, type);
 
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -129,13 +130,7 @@ namespace LBR
 
         b2Circle circle{{0,0}, radius};
 
-        switch (type) {
-        case STATIC:
-            bodyDef.type = b2_kinematicBody;
-            break;
-        default:
-            bodyDef.type = b2_dynamicBody;
-        }
+        defineType(&bodyDef, type);
 
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -164,14 +159,12 @@ namespace LBR
 
     World::World()
     {
-        // 128 pixels per meter is a appropriate for this scene. The boxes are 128 pixels wide.
-        float lengthUnitsPerMeter = 128.0f;
-        b2SetLengthUnitsPerMeter(lengthUnitsPerMeter);
+        b2SetLengthUnitsPerMeter(PIXELS_PER_METER);
 
         b2WorldDef worldDef = b2DefaultWorldDef();
 
         // Realistic gravity is achieved by multiplying gravity by the length unit.
-        worldDef.gravity.y = 9.8f * lengthUnitsPerMeter;
+        worldDef.gravity.y = 9.8f * PIXELS_PER_METER;
         world_id = b2CreateWorld(&worldDef);
     }
 
@@ -204,7 +197,7 @@ namespace LBR
         GuiSetStyle(BUTTON, TEXT_ALIGNMENT, 0);
         GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
 
-        SetTargetFPS(60);
+        SetTargetFPS(FPS);
     }
 
 
