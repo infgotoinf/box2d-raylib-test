@@ -2,14 +2,7 @@
 
 
 #include "box2d/box2d.h"
-
-#include "box2d/collision.h"
-#include "box2d/math_functions.h"
-#include "box2d/types.h"
 #include "raylib.h"
-#include "box2d/types.h"
-#include "raylib.h"
-
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 

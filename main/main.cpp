@@ -1,10 +1,11 @@
 #include "box2d/box2d.h"
 #include "raylib.h"
 
-#include "include/classes.hpp"
-#include "include/config.hpp"
 #include <memory>
 #include <vector>
+
+#include "include/classes.hpp"
+#include "include/config.hpp"
 
 
 
