@@ -66,7 +66,7 @@ namespace LBR
     };
 
 
-    class EntityTriangle : Entity
+    class EntityTriangle : public Entity
     {
         Vector2 v1;
         Vector2 v2;
@@ -76,13 +76,16 @@ namespace LBR
     };
 
 
-    class EntityCircle : Entity
+    class EntityCircle : public Entity
     {
+    public:
         float x;
         float y;
         float radius;
-    public:
 
+        EntityCircle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float radius, Color color = COLOR_ENTITY);
+        void Draw() override;
+        void ChangeCoordinats(float x, float y) override;
     };
 
 
@@ -109,6 +112,7 @@ namespace LBR
         void CopyEntity(const float x, const float y);
         void PasteEntity(const float x, const float y);
         void SpawnRectangle(const float x, const float y);
+        void SpawnCircle(const float x, const float y);
         void DrawEntities();
         bool GuiMenu(const std::vector<Button> buttons, const float x, const float y, const float width);
     };

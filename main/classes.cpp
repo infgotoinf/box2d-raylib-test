@@ -2,6 +2,8 @@
 
 
 #include "box2d/box2d.h"
+#include "box2d/collision.h"
+#include "box2d/math_functions.h"
 #include "box2d/types.h"
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
@@ -22,7 +24,7 @@ namespace LBR
         this->shape = RECTANGLE;
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
-        bodyDef.position = (b2Vec2){ this->x, this->y };
+        bodyDef.position = (b2Vec2){ x, y };
 
         b2Polygon polygon = b2MakeBox(width * 0.5f, height * 0.5f);
 
@@ -59,6 +61,52 @@ namespace LBR
     }
 
 
+    EntityCircle::EntityCircle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float radius, Color color)
+            : x(x), y(y), radius(radius)
+    {
+        this->color = color;
+        this->behaviour = behaviour;
+        this->type = type;
+        this->shape = CIRCLE;
+
+        b2BodyDef bodyDef = b2DefaultBodyDef();
+        bodyDef.position = (b2Vec2){ x, y };
+
+        b2Circle circle{{0,0}, radius};
+
+        switch (type) {
+        case STATIC:
+            bodyDef.type = b2_kinematicBody;
+            break;
+        default:
+            bodyDef.type = b2_dynamicBody;
+        }
+
+        bodyId = b2CreateBody(world_id, &bodyDef);
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+        b2CreateCircleShape(bodyId, &shapeDef, &circle);
+    }
+
+
+    void EntityCircle::Draw()
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+
+        // For some reason without ADDITIONAL_CIRCLE_SIZE physical body size of a
+        // circle seems to be a little bigger that what's rendered.
+        constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
+        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, color);
+        // DrawCircle(p.x, p.y, radius, color);
+    }
+
+
+    void EntityCircle::ChangeCoordinats(float x, float y)
+    {
+        this->x = x;
+        this->y = y;
+    }
+
+
     World::World()
     {
         // 128 pixels per meter is a appropriate for this scene. The boxes are 128 pixels wide.
@@ -89,7 +137,11 @@ namespace LBR
 
     void World::CreateWindow()
     {
-        SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
+        SetConfigFlags(
+                FLAG_VSYNC_HINT
+                | FLAG_WINDOW_HIGHDPI
+                // | FLAG_MSAA_4X_HINT // This flag ruins rendering of small circles for some reason
+        );
 
         InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Lucky Ball Race");
 
@@ -128,6 +180,20 @@ namespace LBR
     }
 
 
+    void World::SpawnCircle(const float x, const float y)
+    {
+        entities.push_back(
+                std::make_unique<EntityCircle>(
+                          world_id
+                        , LBR::NORMAL
+                        , LBR::STATIC
+                        , x
+                        , y
+                        , DEFAULT_CIRCLE_RADIUS
+        ));
+    }
+
+
     void World::DrawEntities()
     {
         for (auto &entity : entities)
@@ -138,8 +204,10 @@ namespace LBR
                 dynamic_cast<EntityRectangle*>(entity.get())->Draw();
                 break;
             case TRIANGLE:
+                dynamic_cast<EntityTriangle*>(entity.get())->Draw();
                 break;
             case CIRCLE:
+                dynamic_cast<EntityCircle*>(entity.get())->Draw();
                 break;
             default:
                 exit(1);
