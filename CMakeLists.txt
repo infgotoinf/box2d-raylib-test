@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.23)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_GENERATOR "Ninja")
+# set(CMAKE_GENERATOR "Ninja") # Doesn't work
 set(CMAKE_BUILD_TYPE "Debug")
 
-project(BulletHand)
+project(LyckyBallRace C CXX)
 
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
