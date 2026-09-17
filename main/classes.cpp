@@ -2,11 +2,14 @@
 
 
 #include "box2d/box2d.h"
+
 #include "box2d/collision.h"
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
 #include "raylib.h"
-#include <mmintrin.h>
+#include "box2d/types.h"
+#include "raylib.h"
+
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
@@ -16,7 +19,7 @@
 
 namespace LBR
 {
-    void defineType(b2BodyDef* bodyDef, EntityType type) {
+    void DefineType(b2BodyDef* bodyDef, EntityType type) {
         switch (type) {
         case STATIC:
             bodyDef->type = b2_kinematicBody;
@@ -38,11 +41,12 @@ namespace LBR
         this->shape = RECTANGLE;
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
+
         bodyDef.position = (b2Vec2){ x, y };
 
         b2Polygon polygon = b2MakeBox(width * 0.5f, height * 0.5f);
 
-        defineType(&bodyDef, type);
+        DefineType(&bodyDef, type);
 
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -69,6 +73,7 @@ namespace LBR
     }
 
 
+
     EntityTriangle::EntityTriangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, Vector2 v1, Vector2 v2, Vector2 v3, Color color)
             : v1(v1), v2(v2), v3(v3)
     {
@@ -91,7 +96,7 @@ namespace LBR
         float radius = 0.0f;
         b2Polygon polygon = b2MakePolygon(&hull, radius);
 
-        defineType(&bodyDef, type);
+        DefineType(&bodyDef, type);
 
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -130,7 +135,7 @@ namespace LBR
 
         b2Circle circle{{0,0}, radius};
 
-        defineType(&bodyDef, type);
+        DefineType(&bodyDef, type);
 
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
