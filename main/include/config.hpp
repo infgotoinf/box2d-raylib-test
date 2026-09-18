@@ -12,9 +12,11 @@
 
 // Colors
 /// Entity color
-#define COLOR_ENTITY                   DARKGRAY
+#define COLOR_ENTITY        DARKGRAY
+/// Entity border color (used on hovered and selected entities)
+#define COLOR_ENTITY_BORDER BLUE
 /// Window background color
-#define COLOR_BG                       LIGHTGRAY
+#define COLOR_BG            LIGHTGRAY
 
 // GUI colors
 /// GUI border color
@@ -29,6 +31,8 @@
 // #define GUI_COLOR_BUTTON_PUSHED_BG     GRAY
 #define GUI_TEXT_SIZE 24
 #define GUI_BUTTON_MARGIN 0
+
+#define ENTITY_BORDER_SIZE 3.0f
 
 #define DEFAULT_RECTANGLE_WIDTH 125.0f
 #define DEFAULT_RECTANGLE_HEIGHT 75.0f

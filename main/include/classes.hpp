@@ -48,6 +48,7 @@ namespace LBR
         EntityType type;
 
         virtual void Draw() = 0;
+        virtual void DrawBorder() = 0;
         virtual void ChangeCoordinats(const float x, const float y) = 0;
     };
 
@@ -60,6 +61,7 @@ namespace LBR
 
         EntityRectangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float width, float height, Color color = COLOR_ENTITY);
         void Draw() override;
+        void DrawBorder() override;
         void ChangeCoordinats(float x, float y) override;
     };
 
@@ -72,6 +74,7 @@ namespace LBR
 
         EntityTriangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, Vector2 v1, Vector2 v2, Vector2 v3, Color color = COLOR_ENTITY);
         void Draw() override;
+        void DrawBorder() override;
         void ChangeCoordinats(float x, float y) override;
     };
 
@@ -83,6 +86,7 @@ namespace LBR
 
         EntityCircle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float radius, Color color = COLOR_ENTITY);
         void Draw() override;
+        void DrawBorder() override;
         void ChangeCoordinats(float x, float y) override;
     };
 
@@ -97,8 +101,8 @@ namespace LBR
         b2WorldId world_id;
         std::vector<std::unique_ptr<Entity>> entities;
         std::vector<std::unique_ptr<Entity>*> copy_buffer;
-        std::vector<std::unique_ptr<Entity>*> selected_entity;
-        std::unique_ptr<Entity> *hovered_entity;
+        std::vector<std::unique_ptr<Entity>*> selected_entities;
+        std::unique_ptr<Entity> *hovered_entity = nullptr;
         Rectangle menu_collision;
         Vector2 menu_coordinats;
         bool show_menu = false;
@@ -114,10 +118,7 @@ namespace LBR
         void SpawnRectangle(const float x, const float y);
         void SpawnTriangle(const float x, const float y);
         void SpawnCircle(const float x, const float y);
-        void DetermineHoveredEntity()
-        {
-
-        }
+        void DetermineHoveredEntity();
         void DrawEntities();
         bool GuiMenu(const std::vector<Button> buttons, const float x, const float y, const float width);
     };

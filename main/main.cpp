@@ -86,6 +86,8 @@ int main(void)
             timestamp = GetTime();
         }
 
+        world.DetermineHoveredEntity();
+
         BeginDrawing();
         {
             ClearBackground(COLOR_BG);

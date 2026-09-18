@@ -3,6 +3,7 @@
 
 #include "box2d/box2d.h"
 #include "raylib.h"
+#include <memory>
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
@@ -59,6 +60,18 @@ namespace LBR
     }
 
 
+    void EntityRectangle::DrawBorder()
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -width / 2, -height / 2 });
+        b2Vec2 p_border = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width + ENTITY_BORDER_SIZE) / 2, -(height + ENTITY_BORDER_SIZE) / 2 });
+        b2Rot rotation = b2Body_GetRotation(bodyId);
+        float radians = b2Rot_GetAngle(rotation);
+
+        DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_BORDER_SIZE / 2, height + ENTITY_BORDER_SIZE / 2}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_BORDER);
+        DrawRectanglePro({p.x, p.y, width - ENTITY_BORDER_SIZE / 2, height - ENTITY_BORDER_SIZE / 2}, {0, 0}, RAD2DEG * radians, color);
+    }
+
+
     void EntityRectangle::ChangeCoordinats(float x, float y)
     {
         // this->x = x;
@@ -104,6 +117,18 @@ namespace LBR
     }
 
 
+    void EntityTriangle::DrawBorder()
+    {
+        b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+        b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
+        b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
+
+        DrawTriangleLines({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, COLOR_ENTITY_BORDER);
+        DrawTriangleLines({p2.x, p2.y}, {p1.x, p1.y}, {p3.x, p3.y}, COLOR_ENTITY_BORDER);
+        DrawTriangleLines({p3.x, p3.y}, {p1.x, p1.y}, {p2.x, p2.y}, COLOR_ENTITY_BORDER);
+    }
+
+
     void EntityTriangle::ChangeCoordinats(float x, float y)
     {
         // this->v1 = {x, y};
@@ -139,6 +164,17 @@ namespace LBR
         // circle seems to be a little bigger that what's rendered.
         constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
         DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, color);
+    }
+
+
+    void EntityCircle::DrawBorder()
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+
+        constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
+        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE + ENTITY_BORDER_SIZE / 2, COLOR_ENTITY_BORDER);
+        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE - ENTITY_BORDER_SIZE / 2, color);
+        // DrawCircleLines(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, COLOR_ENTITY_BORDER);
     }
 
 
@@ -248,30 +284,82 @@ namespace LBR
     }
 
 
-    void World::DrawEntities()
+    void World::DetermineHoveredEntity()
     {
-        // for (auto &entity : entities)
-        // {
-        //     a
-        // }
-
+        Vector2 mouse_pos = GetMousePosition();
+        hovered_entity = nullptr;
         for (auto &entity : entities)
         {
+            bool is_hovered = false;
             switch (entity->shape)
             {
             case RECTANGLE:
-                dynamic_cast<EntityRectangle*>(entity.get())->Draw();
+                {
+                    EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity.get());
+                    b2Vec2 p = b2Body_GetWorldPoint(entity_rect->bodyId, (b2Vec2) { -entity_rect->width / 2, -entity_rect->height / 2 });
+                    is_hovered = CheckCollisionPointRec(mouse_pos, {p.x, p.y, entity_rect->width, entity_rect->height});
+                }
                 break;
             case TRIANGLE:
-                dynamic_cast<EntityTriangle*>(entity.get())->Draw();
+                {
+                    EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity.get());
+                    b2Vec2 p1 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { 0, 0 });
+                    b2Vec2 p2 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v2.x, entity_tri->v2.y });
+                    b2Vec2 p3 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v3.x, entity_tri->v3.y });
+                    is_hovered = CheckCollisionPointTriangle(mouse_pos, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y });
+                }
                 break;
             case CIRCLE:
-                dynamic_cast<EntityCircle*>(entity.get())->Draw();
+                {
+                    EntityCircle *entity_circle = dynamic_cast<EntityCircle*>(entity.get());
+                    b2Vec2 p = b2Body_GetWorldPoint(entity_circle->bodyId, (b2Vec2) { 0, 0 });
+                    is_hovered = CheckCollisionPointCircle(mouse_pos, { p.x, p.y }, entity_circle->radius);
+                }
                 break;
             default:
-                exit(1);
+                break;
             }
+            if (is_hovered)
+                hovered_entity = &entity;
         }
+    }
+
+
+    void DrawEntityByShape(std::unique_ptr<Entity> *entity, bool draw_border)
+    {
+        switch (entity->get()->shape)
+        {
+        case RECTANGLE:
+            if (draw_border)
+                dynamic_cast<EntityRectangle*>(entity->get())->DrawBorder();
+            else
+                dynamic_cast<EntityRectangle*>(entity->get())->Draw();
+            break;
+        case TRIANGLE:
+            if (draw_border)
+                dynamic_cast<EntityTriangle*>(entity->get())->DrawBorder();
+            else
+                dynamic_cast<EntityTriangle*>(entity->get())->Draw();
+            break;
+        case CIRCLE:
+            if (draw_border)
+                dynamic_cast<EntityCircle*>(entity->get())->DrawBorder();
+            else
+                dynamic_cast<EntityCircle*>(entity->get())->Draw();
+            break;
+        default:
+            exit(1);
+        }
+    }
+
+    void World::DrawEntities()
+    {
+        for (auto &entity : entities)
+        {
+            DrawEntityByShape(&entity, false);
+        }
+        if (hovered_entity != nullptr)
+            DrawEntityByShape(hovered_entity, true);
     }
 
 
