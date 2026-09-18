@@ -26,7 +26,7 @@ namespace LBR
     }
 
     EntityRectangle::EntityRectangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float width, float height, Color color)
-            : x(x), y(y), width(width), height(height)
+            : width(width), height(height)
     {
         this->color = color;
         this->behaviour = behaviour;
@@ -61,14 +61,14 @@ namespace LBR
 
     void EntityRectangle::ChangeCoordinats(float x, float y)
     {
-        this->x = x;
-        this->y = y;
+        // this->x = x;
+        // this->y = y;
     }
 
 
 
     EntityTriangle::EntityTriangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, Vector2 v1, Vector2 v2, Vector2 v3, Color color)
-            : v1(v1), v2(v2), v3(v3)
+            : v2({v2.x - v1.x, v2.y - v1.y}), v3({v3.x - v1.x, v3.y - v1.y})
     {
         this->color = color;
         this->behaviour = behaviour;
@@ -79,12 +79,7 @@ namespace LBR
         bodyDef.position = (b2Vec2){ v1.x, v1.y };
 
 
-        // b2Vec2 points[] = {
-        //     b2Vec2 {-10.0f, 0.0f}
-        //     , b2Vec2 {10.0f, 0.0f}
-        //     , b2Vec2 {0.0f, 10.0f}
-        // };
-        b2Vec2 points[] = {{0, 0}, {v2.x - v1.x, v2.y - v1.y}, {v3.x - v1.x, v3.y - v1.y}};
+        b2Vec2 points[] = {{0, 0}, {this->v2.x, this->v2.y}, {this->v3.x, this->v3.y}};
         b2Hull hull = b2ComputeHull(points, 3);
         float radius = 0.0f;
         b2Polygon polygon = b2MakePolygon(&hull, radius);
@@ -100,8 +95,8 @@ namespace LBR
     void EntityTriangle::Draw()
     {
         b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
-        b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x - v1.x, v2.y - v1.y });
-        b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x - v1.x, v3.y - v1.y });
+        b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
+        b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
 
         DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
         DrawTriangle({p2.x, p2.y}, {p1.x, p1.y}, {p3.x, p3.y}, color);
@@ -111,12 +106,12 @@ namespace LBR
 
     void EntityTriangle::ChangeCoordinats(float x, float y)
     {
-        this->v1 = {x, y};
+        // this->v1 = {x, y};
     }
 
 
     EntityCircle::EntityCircle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float radius, Color color)
-            : x(x), y(y), radius(radius)
+            : radius(radius)
     {
         this->color = color;
         this->behaviour = behaviour;
@@ -144,14 +139,13 @@ namespace LBR
         // circle seems to be a little bigger that what's rendered.
         constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
         DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, color);
-        // DrawCircle(p.x, p.y, radius, color);
     }
 
 
     void EntityCircle::ChangeCoordinats(float x, float y)
     {
-        this->x = x;
-        this->y = y;
+        // this->x = x;
+        // this->y = y;
     }
 
 
@@ -201,13 +195,13 @@ namespace LBR
 
     void World::CopyEntity(const float x, const float y)
     {
-        copy_buffer->ChangeCoordinats(x, y);
+        // copy_buffer->ChangeCoordinats(x, y);
     }
 
 
     void World::PasteEntity(const float x, const float y)
     {
-        copy_buffer->ChangeCoordinats(x, y);
+        // copy_buffer->ChangeCoordinats(x, y);
     }
 
 
@@ -256,6 +250,11 @@ namespace LBR
 
     void World::DrawEntities()
     {
+        // for (auto &entity : entities)
+        // {
+        //     a
+        // }
+
         for (auto &entity : entities)
         {
             switch (entity->shape)
@@ -278,7 +277,8 @@ namespace LBR
 
     bool World::GuiMenu(const std::vector<Button> buttons, const float x, const float y, const float width)
     {
-        GuiPanel({ x, y, width, (float)buttons.size() * (GUI_TEXT_SIZE + GUI_BUTTON_MARGIN) + GUI_BUTTON_MARGIN }, nullptr);
+        menu_collision = { x, y, width, (float)buttons.size() * (GUI_TEXT_SIZE + GUI_BUTTON_MARGIN) + GUI_BUTTON_MARGIN };
+        GuiPanel(menu_collision, nullptr);
 
         bool button_was_clicked = false;
         for (int i = 0; i < buttons.size(); ++i)

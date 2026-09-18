@@ -55,8 +55,6 @@ namespace LBR
     class EntityRectangle : public Entity
     {
     public:
-        float x;
-        float y;
         float width;
         float height;
 
@@ -69,7 +67,6 @@ namespace LBR
     class EntityTriangle : public Entity
     {
     public:
-        Vector2 v1;
         Vector2 v2;
         Vector2 v3;
 
@@ -82,8 +79,6 @@ namespace LBR
     class EntityCircle : public Entity
     {
     public:
-        float x;
-        float y;
         float radius;
 
         EntityCircle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float radius, Color color = COLOR_ENTITY);
@@ -101,8 +96,10 @@ namespace LBR
     public:
         b2WorldId world_id;
         std::vector<std::unique_ptr<Entity>> entities;
-        std::unique_ptr<Entity> copy_buffer;
-        std::unique_ptr<Entity> selected_item;
+        std::vector<std::unique_ptr<Entity>*> copy_buffer;
+        std::vector<std::unique_ptr<Entity>*> selected_entity;
+        std::unique_ptr<Entity> *hovered_entity;
+        Rectangle menu_collision;
         Vector2 menu_coordinats;
         bool show_menu = false;
         bool pause = false;
@@ -117,6 +114,10 @@ namespace LBR
         void SpawnRectangle(const float x, const float y);
         void SpawnTriangle(const float x, const float y);
         void SpawnCircle(const float x, const float y);
+        void DetermineHoveredEntity()
+        {
+
+        }
         void DrawEntities();
         bool GuiMenu(const std::vector<Button> buttons, const float x, const float y, const float width);
     };
