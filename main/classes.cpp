@@ -62,13 +62,13 @@ namespace LBR
 
     void EntityRectangle::DrawBorder()
     {
-        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -width / 2, -height / 2 });
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width - ENTITY_BORDER_SIZE) / 2, -(height - ENTITY_BORDER_SIZE) / 2 });
         b2Vec2 p_border = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width + ENTITY_BORDER_SIZE) / 2, -(height + ENTITY_BORDER_SIZE) / 2 });
         b2Rot rotation = b2Body_GetRotation(bodyId);
         float radians = b2Rot_GetAngle(rotation);
 
-        DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_BORDER_SIZE / 2, height + ENTITY_BORDER_SIZE / 2}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_BORDER);
-        DrawRectanglePro({p.x, p.y, width - ENTITY_BORDER_SIZE / 2, height - ENTITY_BORDER_SIZE / 2}, {0, 0}, RAD2DEG * radians, color);
+        DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_BORDER_SIZE, height + ENTITY_BORDER_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_BORDER);
+        DrawRectanglePro({p.x, p.y, width - ENTITY_BORDER_SIZE, height - ENTITY_BORDER_SIZE}, {0, 0}, RAD2DEG * radians, color);
     }
 
 
@@ -105,15 +105,33 @@ namespace LBR
     }
 
 
+    bool PointsAreCounterclockwise(b2Vec2 v1, b2Vec2 v2, b2Vec2 v3)
+    {
+        // Math https://www.baeldung.com/cs/list-polygon-points-clockwise#1-area-of-a-triangle
+        return !(((v2.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (v2.y * v1.y)) * 0.5f);
+    }
+
+
     void EntityTriangle::Draw()
     {
         b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
         b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
         b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
 
-        DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
-        DrawTriangle({p2.x, p2.y}, {p1.x, p1.y}, {p3.x, p3.y}, color);
-        DrawTriangle({p3.x, p3.y}, {p1.x, p1.y}, {p2.x, p2.y}, color);
+        // We check only one time since cases there points
+        // are counterclockwise are:
+        //
+        //      3     1->2->3
+        //    /  \    2->3->1
+        //  1 --- 2   3->1->2
+        //
+        //      2     1->3->2
+        //    /  \    3->2->1
+        //  1 --- 3   2->1->3
+        if (PointsAreCounterclockwise(p1, p2, p3))
+            DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
+        else
+            DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, color);
     }
 
 
@@ -122,10 +140,19 @@ namespace LBR
         b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
         b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
         b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
+        // b2Vec2 p_center = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v2.x + v3.x) / 3, (v2.y + v3.y) / 3 });
 
-        DrawTriangleLines({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, COLOR_ENTITY_BORDER);
-        DrawTriangleLines({p2.x, p2.y}, {p1.x, p1.y}, {p3.x, p3.y}, COLOR_ENTITY_BORDER);
-        DrawTriangleLines({p3.x, p3.y}, {p1.x, p1.y}, {p2.x, p2.y}, COLOR_ENTITY_BORDER);
+
+        if (PointsAreCounterclockwise(p1, p2, p3))
+        {
+            DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, COLOR_ENTITY_BORDER);
+            DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
+        }
+        else
+        {
+            DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, COLOR_ENTITY_BORDER);
+            DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, color);
+        }
     }
 
 

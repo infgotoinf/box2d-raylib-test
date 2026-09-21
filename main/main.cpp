@@ -92,8 +92,6 @@ int main(void)
         {
             ClearBackground(COLOR_BG);
 
-            world.DrawEntities();
-
             for (auto& entity : rain_entities)
             {
                 switch (entity->shape)
@@ -110,6 +108,8 @@ int main(void)
                     break;
                 }
             }
+
+            world.DrawEntities();
 
             if (world.show_menu) {
                 std::vector<LBR::Button> buttons {
