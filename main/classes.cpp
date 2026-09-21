@@ -143,7 +143,6 @@ namespace LBR
         b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
         b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
         b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
-        b2Vec2 p_c = b2Body_GetWorldPoint(bodyId, (b2Vec2) { centroid.x, centroid.y });
 
         // Lines from center to points. Using Pythagoras formula.
         float c_p1 = std::sqrt(centroid.x * centroid.x + 0 * 0);
@@ -166,13 +165,11 @@ namespace LBR
         {
             DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, COLOR_ENTITY_OUTLINE);
             DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
-            DrawCircleV({ p_c.x, p_c.y }, ENTITY_OUTLINE_SIZE, RED);
         }
         else
         {
             DrawTriangle({b1.x, b1.y}, {b3.x, b3.y}, {b2.x, b2.y}, COLOR_ENTITY_OUTLINE);
             DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, color);
-            DrawCircleV({ p_c.x, p_c.y }, ENTITY_OUTLINE_SIZE, RED);
         }
     }
 
