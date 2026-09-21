@@ -2,7 +2,9 @@
 
 
 #include "box2d/box2d.h"
+#include "box2d/math_functions.h"
 #include "raylib.h"
+#include <cmath>
 #include <memory>
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -87,6 +89,7 @@ namespace LBR
         this->behaviour = behaviour;
         this->type = type;
         this->shape = TRIANGLE;
+        this->centroid = { (this->v2.x + this->v3.x)/3, (this->v2.y + this->v3.y)/3 };
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.position = (b2Vec2){ v1.x, v1.y };
@@ -123,9 +126,27 @@ namespace LBR
         b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
         b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
 
-        DrawTriangleLines({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, COLOR_ENTITY_BORDER);
-        DrawTriangleLines({p2.x, p2.y}, {p1.x, p1.y}, {p3.x, p3.y}, COLOR_ENTITY_BORDER);
-        DrawTriangleLines({p3.x, p3.y}, {p1.x, p1.y}, {p2.x, p2.y}, COLOR_ENTITY_BORDER);
+        // Lines from center to points. Using Pythagoras formula.
+        float c_p1 = std::sqrt(centroid.x * centroid.x + 0 * 0);
+        float c_p2 = std::sqrt(centroid.x * centroid.x + v2.y * v2.y);
+        float c_p3 = std::sqrt(centroid.x * centroid.x + v3.y * v3.y);
+
+        // Lines from center to borders.
+        float c_b1 = (c_p1 + ENTITY_BORDER_SIZE) / c_p1;
+        float c_b2 = (c_p2 + ENTITY_BORDER_SIZE) / c_p2;
+        float c_b3 = (c_p3 + ENTITY_BORDER_SIZE) / c_p3;
+
+        b2Vec2 b1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (0    - centroid.x) * c_b1, (0    - centroid.y) * c_b1 });
+        b2Vec2 b2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v2.x - centroid.x) * c_b2, (v2.y - centroid.y) * c_b2 });
+        b2Vec2 b3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v3.x - centroid.x) * c_b3, (v3.y - centroid.y) * c_b3 });
+
+        DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, COLOR_ENTITY_BORDER);
+        DrawTriangle({b2.x, b2.y}, {b1.x, b1.y}, {b3.x, b3.y}, COLOR_ENTITY_BORDER);
+        DrawTriangle({b3.x, b3.y}, {b1.x, b1.y}, {b2.x, b2.y}, COLOR_ENTITY_BORDER);
+
+        DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
+        DrawTriangle({p2.x, p2.y}, {p1.x, p1.y}, {p3.x, p3.y}, color);
+        DrawTriangle({p3.x, p3.y}, {p1.x, p1.y}, {p2.x, p2.y}, color);
     }
 
 

@@ -71,6 +71,7 @@ namespace LBR
     public:
         Vector2 v2;
         Vector2 v3;
+        Vector2 centroid;
 
         EntityTriangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, Vector2 v1, Vector2 v2, Vector2 v3, Color color = COLOR_ENTITY);
         void Draw() override;
