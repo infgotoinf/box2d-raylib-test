@@ -62,15 +62,15 @@ namespace LBR
     }
 
 
-    void EntityRectangle::DrawBorder()
+    void EntityRectangle::DrawOutline()
     {
-        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width - ENTITY_BORDER_SIZE) / 2, -(height - ENTITY_BORDER_SIZE) / 2 });
-        b2Vec2 p_border = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width + ENTITY_BORDER_SIZE) / 2, -(height + ENTITY_BORDER_SIZE) / 2 });
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width - ENTITY_OUTLINE_SIZE) / 2, -(height - ENTITY_OUTLINE_SIZE) / 2 });
+        b2Vec2 p_border = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width + ENTITY_OUTLINE_SIZE) / 2, -(height + ENTITY_OUTLINE_SIZE) / 2 });
         b2Rot rotation = b2Body_GetRotation(bodyId);
         float radians = b2Rot_GetAngle(rotation);
 
-        DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_BORDER_SIZE, height + ENTITY_BORDER_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_BORDER);
-        DrawRectanglePro({p.x, p.y, width - ENTITY_BORDER_SIZE, height - ENTITY_BORDER_SIZE}, {0, 0}, RAD2DEG * radians, color);
+        DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_OUTLINE_SIZE, height + ENTITY_OUTLINE_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_OUTLINE);
+        DrawRectanglePro({p.x, p.y, width - ENTITY_OUTLINE_SIZE, height - ENTITY_OUTLINE_SIZE}, {0, 0}, RAD2DEG * radians, color);
     }
 
 
@@ -138,7 +138,7 @@ namespace LBR
     }
 
 
-    void EntityTriangle::DrawBorder()
+    void EntityTriangle::DrawOutline()
     {
         b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
         b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
@@ -151,9 +151,9 @@ namespace LBR
         float c_p3 = std::sqrt(centroid.x * centroid.x + v3.y * v3.y);
 
         // Lines from center to borders.
-        float c_b1 = (c_p1 + ENTITY_BORDER_SIZE * 2) / c_p1;
-        float c_b2 = (c_p2 + ENTITY_BORDER_SIZE * 2) / c_p2;
-        float c_b3 = (c_p3 + ENTITY_BORDER_SIZE * 2) / c_p3;
+        float c_b1 = (c_p1 + ENTITY_OUTLINE_SIZE * 2) / c_p1;
+        float c_b2 = (c_p2 + ENTITY_OUTLINE_SIZE * 2) / c_p2;
+        float c_b3 = (c_p3 + ENTITY_OUTLINE_SIZE * 2) / c_p3;
 
         b2Vec2 b1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (0    - centroid.x) * c_b1 + centroid.x
                                                           , (0    - centroid.y) * c_b1 + centroid.y });
@@ -164,15 +164,15 @@ namespace LBR
 
         if (PointsAreCounterclockwise(p1, p2, p3))
         {
-            DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, COLOR_ENTITY_BORDER);
+            DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, COLOR_ENTITY_OUTLINE);
             DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
-            DrawCircleV({ p_c.x, p_c.y }, ENTITY_BORDER_SIZE, RED);
+            DrawCircleV({ p_c.x, p_c.y }, ENTITY_OUTLINE_SIZE, RED);
         }
         else
         {
-            DrawTriangle({b1.x, b1.y}, {b3.x, b3.y}, {b2.x, b2.y}, COLOR_ENTITY_BORDER);
+            DrawTriangle({b1.x, b1.y}, {b3.x, b3.y}, {b2.x, b2.y}, COLOR_ENTITY_OUTLINE);
             DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, color);
-            DrawCircleV({ p_c.x, p_c.y }, ENTITY_BORDER_SIZE, RED);
+            DrawCircleV({ p_c.x, p_c.y }, ENTITY_OUTLINE_SIZE, RED);
         }
     }
 
@@ -215,14 +215,14 @@ namespace LBR
     }
 
 
-    void EntityCircle::DrawBorder()
+    void EntityCircle::DrawOutline()
     {
         b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
 
         constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
-        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE + ENTITY_BORDER_SIZE / 2, COLOR_ENTITY_BORDER);
-        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE - ENTITY_BORDER_SIZE / 2, color);
-        // DrawCircleLines(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, COLOR_ENTITY_BORDER);
+        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE + ENTITY_OUTLINE_SIZE / 2, COLOR_ENTITY_OUTLINE);
+        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE - ENTITY_OUTLINE_SIZE / 2, color);
+        // DrawCircleLines(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, COLOR_ENTITY_OUTLINE);
     }
 
 
@@ -379,19 +379,19 @@ namespace LBR
         {
         case RECTANGLE:
             if (draw_border)
-                dynamic_cast<EntityRectangle*>(entity->get())->DrawBorder();
+                dynamic_cast<EntityRectangle*>(entity->get())->DrawOutline();
             else
                 dynamic_cast<EntityRectangle*>(entity->get())->Draw();
             break;
         case TRIANGLE:
             if (draw_border)
-                dynamic_cast<EntityTriangle*>(entity->get())->DrawBorder();
+                dynamic_cast<EntityTriangle*>(entity->get())->DrawOutline();
             else
                 dynamic_cast<EntityTriangle*>(entity->get())->Draw();
             break;
         case CIRCLE:
             if (draw_border)
-                dynamic_cast<EntityCircle*>(entity->get())->DrawBorder();
+                dynamic_cast<EntityCircle*>(entity->get())->DrawOutline();
             else
                 dynamic_cast<EntityCircle*>(entity->get())->Draw();
             break;
