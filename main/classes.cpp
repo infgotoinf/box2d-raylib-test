@@ -143,7 +143,7 @@ namespace LBR
         b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
         b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
         b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
-        // b2Vec2 p_center = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v2.x + v3.x) / 3, (v2.y + v3.y) / 3 });
+        b2Vec2 p_c = b2Body_GetWorldPoint(bodyId, (b2Vec2) { centroid.x, centroid.y });
 
         // Lines from center to points. Using Pythagoras formula.
         float c_p1 = std::sqrt(centroid.x * centroid.x + 0 * 0);
@@ -151,23 +151,28 @@ namespace LBR
         float c_p3 = std::sqrt(centroid.x * centroid.x + v3.y * v3.y);
 
         // Lines from center to borders.
-        float c_b1 = (c_p1 + ENTITY_BORDER_SIZE) / c_p1;
-        float c_b2 = (c_p2 + ENTITY_BORDER_SIZE) / c_p2;
-        float c_b3 = (c_p3 + ENTITY_BORDER_SIZE) / c_p3;
+        float c_b1 = (c_p1 + ENTITY_BORDER_SIZE * 2) / c_p1;
+        float c_b2 = (c_p2 + ENTITY_BORDER_SIZE * 2) / c_p2;
+        float c_b3 = (c_p3 + ENTITY_BORDER_SIZE * 2) / c_p3;
 
-        b2Vec2 b1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (0    - centroid.x) * c_b1, (0    - centroid.y) * c_b1 });
-        b2Vec2 b2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v2.x - centroid.x) * c_b2, (v2.y - centroid.y) * c_b2 });
-        b2Vec2 b3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v3.x - centroid.x) * c_b3, (v3.y - centroid.y) * c_b3 });
+        b2Vec2 b1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (0    - centroid.x) * c_b1 + centroid.x
+                                                          , (0    - centroid.y) * c_b1 + centroid.y });
+        b2Vec2 b2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v2.x - centroid.x) * c_b2 + centroid.x
+                                                          , (v2.y - centroid.y) * c_b2 + centroid.y });
+        b2Vec2 b3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { (v3.x - centroid.x) * c_b3 + centroid.x
+                                                          , (v3.y - centroid.y) * c_b3 + centroid.y });
 
         if (PointsAreCounterclockwise(p1, p2, p3))
         {
             DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, COLOR_ENTITY_BORDER);
-            DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, color);
+            DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
+            DrawCircleV({ p_c.x, p_c.y }, ENTITY_BORDER_SIZE, RED);
         }
         else
         {
-            DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, COLOR_ENTITY_BORDER);
+            DrawTriangle({b1.x, b1.y}, {b3.x, b3.y}, {b2.x, b2.y}, COLOR_ENTITY_BORDER);
             DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, color);
+            DrawCircleV({ p_c.x, p_c.y }, ENTITY_BORDER_SIZE, RED);
         }
     }
 
