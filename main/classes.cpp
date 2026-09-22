@@ -329,43 +329,52 @@ namespace LBR
     }
 
 
+    bool isHovered(std::unique_ptr<Entity>* entity, Vector2 mouse_pos)
+    {
+        bool is_hovered = false;
+        switch (entity->get()->shape)
+        {
+        case RECTANGLE:
+            {
+                EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity->get());
+                b2Vec2 p = b2Body_GetWorldPoint(entity_rect->bodyId, (b2Vec2) { -entity_rect->width / 2, -entity_rect->height / 2 });
+                is_hovered = CheckCollisionPointRec(mouse_pos, {p.x, p.y, entity_rect->width, entity_rect->height});
+            }
+            break;
+        case TRIANGLE:
+            {
+                EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity->get());
+                b2Vec2 p1 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { 0, 0 });
+                b2Vec2 p2 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v2.x, entity_tri->v2.y });
+                b2Vec2 p3 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v3.x, entity_tri->v3.y });
+                is_hovered = CheckCollisionPointTriangle(mouse_pos, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y });
+            }
+            break;
+        case CIRCLE:
+            {
+                EntityCircle *entity_circle = dynamic_cast<EntityCircle*>(entity->get());
+                b2Vec2 p = b2Body_GetWorldPoint(entity_circle->bodyId, (b2Vec2) { 0, 0 });
+                is_hovered = CheckCollisionPointCircle(mouse_pos, { p.x, p.y }, entity_circle->radius);
+            }
+            break;
+        default:
+            break;
+        }
+        return is_hovered;
+    }
+
+
     void World::DetermineHoveredEntity()
     {
         Vector2 mouse_pos = GetMousePosition();
-        hovered_entity = nullptr;
-        for (auto &entity : entities)
+        if (hovered_entity == nullptr || !isHovered(hovered_entity, mouse_pos))
         {
-            bool is_hovered = false;
-            switch (entity->shape)
+            hovered_entity = nullptr;
+            for (auto &entity : entities)
             {
-            case RECTANGLE:
-                {
-                    EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity.get());
-                    b2Vec2 p = b2Body_GetWorldPoint(entity_rect->bodyId, (b2Vec2) { -entity_rect->width / 2, -entity_rect->height / 2 });
-                    is_hovered = CheckCollisionPointRec(mouse_pos, {p.x, p.y, entity_rect->width, entity_rect->height});
-                }
-                break;
-            case TRIANGLE:
-                {
-                    EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity.get());
-                    b2Vec2 p1 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { 0, 0 });
-                    b2Vec2 p2 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v2.x, entity_tri->v2.y });
-                    b2Vec2 p3 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v3.x, entity_tri->v3.y });
-                    is_hovered = CheckCollisionPointTriangle(mouse_pos, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y });
-                }
-                break;
-            case CIRCLE:
-                {
-                    EntityCircle *entity_circle = dynamic_cast<EntityCircle*>(entity.get());
-                    b2Vec2 p = b2Body_GetWorldPoint(entity_circle->bodyId, (b2Vec2) { 0, 0 });
-                    is_hovered = CheckCollisionPointCircle(mouse_pos, { p.x, p.y }, entity_circle->radius);
-                }
-                break;
-            default:
-                break;
+                if (isHovered(&entity, mouse_pos))
+                    hovered_entity = &entity;
             }
-            if (is_hovered)
-                hovered_entity = &entity;
         }
     }
 
