@@ -4,10 +4,12 @@
 #include "box2d/box2d.h"
 #include "box2d/math_functions.h"
 #include "raylib.h"
-#include <cmath>
-#include <memory>
+#include <cstdlib>
+#include <vector>
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+
+#include <memory>
 
 #include "include/config.hpp"
 
@@ -15,7 +17,18 @@
 
 namespace LBR
 {
-    void DefineType(b2BodyDef* bodyDef, EntityType type) {
+    Entity::~Entity() {
+        b2DestroyBody(bodyId);
+    }
+
+
+    void Entity::ChangeCoordinats(const float x, const float y)
+    {
+        b2Body_SetTransform(bodyId, { x, y }, { 0, 0 });
+    }
+
+
+    void DefineType(b2BodyDef* bodyDef, const EntityType type) {
         switch (type) {
         case STATIC:
             bodyDef->type = b2_kinematicBody;
@@ -62,24 +75,16 @@ namespace LBR
     }
 
 
-    void EntityRectangle::DrawOutline()
+    void EntityRectangle::DrawOutline(Color outline_color)
     {
         b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width - ENTITY_OUTLINE_SIZE) / 2, -(height - ENTITY_OUTLINE_SIZE) / 2 });
         b2Vec2 p_border = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width + ENTITY_OUTLINE_SIZE) / 2, -(height + ENTITY_OUTLINE_SIZE) / 2 });
         b2Rot rotation = b2Body_GetRotation(bodyId);
         float radians = b2Rot_GetAngle(rotation);
 
-        DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_OUTLINE_SIZE, height + ENTITY_OUTLINE_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_OUTLINE);
+        DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_OUTLINE_SIZE, height + ENTITY_OUTLINE_SIZE}, {0, 0}, RAD2DEG * radians, outline_color);
         DrawRectanglePro({p.x, p.y, width - ENTITY_OUTLINE_SIZE, height - ENTITY_OUTLINE_SIZE}, {0, 0}, RAD2DEG * radians, color);
     }
-
-
-    void EntityRectangle::ChangeCoordinats(float x, float y)
-    {
-        // this->x = x;
-        // this->y = y;
-    }
-
 
 
     EntityTriangle::EntityTriangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, Vector2 v1, Vector2 v2, Vector2 v3, Color color)
@@ -138,7 +143,7 @@ namespace LBR
     }
 
 
-    void EntityTriangle::DrawOutline()
+    void EntityTriangle::DrawOutline(Color outline_color)
     {
         b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
         b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
@@ -163,20 +168,14 @@ namespace LBR
 
         if (PointsAreCounterclockwise(p1, p2, p3))
         {
-            DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, COLOR_ENTITY_OUTLINE);
+            DrawTriangle({b1.x, b1.y}, {b2.x, b2.y}, {b3.x, b3.y}, outline_color);
             DrawTriangle({p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}, color);
         }
         else
         {
-            DrawTriangle({b1.x, b1.y}, {b3.x, b3.y}, {b2.x, b2.y}, COLOR_ENTITY_OUTLINE);
+            DrawTriangle({b1.x, b1.y}, {b3.x, b3.y}, {b2.x, b2.y}, outline_color);
             DrawTriangle({p1.x, p1.y}, {p3.x, p3.y}, {p2.x, p2.y}, color);
         }
-    }
-
-
-    void EntityTriangle::ChangeCoordinats(float x, float y)
-    {
-        // this->v1 = {x, y};
     }
 
 
@@ -212,21 +211,13 @@ namespace LBR
     }
 
 
-    void EntityCircle::DrawOutline()
+    void EntityCircle::DrawOutline(Color outline_color)
     {
         b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
 
         constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
-        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE + ENTITY_OUTLINE_SIZE / 2, COLOR_ENTITY_OUTLINE);
+        DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE + ENTITY_OUTLINE_SIZE / 2, outline_color);
         DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE - ENTITY_OUTLINE_SIZE / 2, color);
-        // DrawCircleLines(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, COLOR_ENTITY_OUTLINE);
-    }
-
-
-    void EntityCircle::ChangeCoordinats(float x, float y)
-    {
-        // this->x = x;
-        // this->y = y;
     }
 
 
@@ -274,15 +265,98 @@ namespace LBR
     }
 
 
-    void World::CopyEntity(const float x, const float y)
+    void World::CopyEntities(const float x, const float y)
     {
-        // copy_buffer->ChangeCoordinats(x, y);
+        copy_buffer.clear();
+        for (auto &entity : selected_entities)
+        {
+            copy_buffer.push_back(entity);
+        }
     }
 
 
-    void World::PasteEntity(const float x, const float y)
+    void World::PasteEntities(const float x, const float y)
     {
-        // copy_buffer->ChangeCoordinats(x, y);
+        std::list<Entity*> new_selected_entities;
+        b2Vec2 middle_of_entities = { 0, 0 };
+        for (auto &entity : copy_buffer)
+        {
+            new_selected_entities.push_back(entity);
+            middle_of_entities += b2Body_GetWorldPoint(entity->bodyId, (b2Vec2) { 0, 0 });
+        }
+
+        selected_entities.clear();
+        middle_of_entities.x /= new_selected_entities.size();
+        middle_of_entities.y /= new_selected_entities.size();
+        for (auto &entity : new_selected_entities)
+        {
+            b2Vec2 entity_middle = b2Body_GetWorldPoint(entity->bodyId, (b2Vec2) { 0, 0 });
+            b2Vec2 new_entity_middle = { entity_middle.x - middle_of_entities.x + x
+                                       , entity_middle.y - middle_of_entities.y + y };
+            switch (entity->shape) {
+            case RECTANGLE:
+                {
+                    EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity);
+                    entities.push_back(std::make_unique<EntityRectangle>(
+                             world_id
+                            ,entity_rect->behaviour
+                            ,entity_rect->type
+                            ,new_entity_middle.x
+                            ,new_entity_middle.y
+                            ,entity_rect->width
+                            ,entity_rect->height
+                    ));
+                }
+                break;
+            case TRIANGLE:
+                {
+                    EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity);
+                    b2Vec2 v1p = entity_middle;
+                    b2Vec2 v2p = b2Body_GetWorldPoint(entity->bodyId, b2Vec2{ entity_tri->v2.x, entity_tri->v2.y });
+                    b2Vec2 v3p = b2Body_GetWorldPoint(entity->bodyId, b2Vec2{ entity_tri->v3.x, entity_tri->v3.y });
+                    entities.push_back(std::make_unique<EntityTriangle>(
+                             world_id
+                            ,entity_tri->behaviour
+                            ,entity_tri->type
+                            ,Vector2{ v1p.x - middle_of_entities.x + x
+                                    , v1p.y - middle_of_entities.y + y }
+                            ,Vector2{ v2p.x - middle_of_entities.x + x
+                                    , v2p.y - middle_of_entities.y + y }
+                            ,Vector2{ v3p.x - middle_of_entities.x + x
+                                    , v3p.y - middle_of_entities.y + y }
+                    ));
+                }
+                break;
+            case CIRCLE:
+                {
+                    EntityCircle *entity_circ = dynamic_cast<EntityCircle*>(entity);
+                    entities.push_back(std::make_unique<EntityCircle>(
+                             world_id
+                            ,entity_circ->behaviour
+                            ,entity_circ->type
+                            ,new_entity_middle.x
+                            ,new_entity_middle.y
+                            ,entity_circ->radius
+                    ));
+                }
+                break;
+            default:
+                exit(1);
+            }
+            selected_entities.push_back(entities.back().get());
+        }
+    }
+
+
+    void World::DeleteEntities(const float x, const float y)
+    {
+        for (auto &entity : selected_entities)
+        {
+            entities.remove_if([entity](const std::unique_ptr<Entity>& ptr) {
+                return ptr.get() == entity;
+            });
+        }
+        selected_entities.clear();
     }
 
 
@@ -290,13 +364,13 @@ namespace LBR
     {
         entities.push_back(
                 std::make_unique<EntityRectangle>(
-                          world_id
-                        , LBR::NORMAL
-                        , LBR::STATIC
-                        , x
-                        , y
-                        , DEFAULT_RECTANGLE_WIDTH
-                        , DEFAULT_RECTANGLE_HEIGHT
+                         world_id
+                        ,LBR::NORMAL
+                        ,LBR::STATIC
+                        ,x
+                        ,y
+                        ,DEFAULT_RECTANGLE_WIDTH
+                        ,DEFAULT_RECTANGLE_HEIGHT
         ));
     }
 
@@ -305,12 +379,12 @@ namespace LBR
     {
         entities.push_back(
                 std::make_unique<EntityTriangle>(
-                          world_id
-                        , LBR::NORMAL
-                        , LBR::STATIC
-                        , Vector2 {x - DEFAULT_RECTANGLE_WIDTH / 2, y + DEFAULT_RECTANGLE_HEIGHT}
-                        , Vector2 {x, y}
-                        , Vector2 {x + DEFAULT_RECTANGLE_WIDTH / 2, y + DEFAULT_RECTANGLE_HEIGHT}
+                         world_id
+                        ,LBR::NORMAL
+                        ,LBR::STATIC
+                        ,Vector2 {x - DEFAULT_RECTANGLE_WIDTH / 2, y + DEFAULT_RECTANGLE_HEIGHT}
+                        ,Vector2 {x, y}
+                        ,Vector2 {x + DEFAULT_RECTANGLE_WIDTH / 2, y + DEFAULT_RECTANGLE_HEIGHT}
         ));
     }
 
@@ -319,31 +393,31 @@ namespace LBR
     {
         entities.push_back(
                 std::make_unique<EntityCircle>(
-                          world_id
-                        , LBR::NORMAL
-                        , LBR::STATIC
-                        , x
-                        , y
-                        , DEFAULT_CIRCLE_RADIUS
+                         world_id
+                        ,LBR::NORMAL
+                        ,LBR::STATIC
+                        ,x
+                        ,y
+                        ,DEFAULT_CIRCLE_RADIUS
         ));
     }
 
 
-    bool isHovered(std::unique_ptr<Entity>* entity, Vector2 mouse_pos)
+    bool isHovered(Entity *entity, Vector2 mouse_pos)
     {
         bool is_hovered = false;
-        switch (entity->get()->shape)
+        switch (entity->shape)
         {
         case RECTANGLE:
             {
-                EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity->get());
+                EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity);
                 b2Vec2 p = b2Body_GetWorldPoint(entity_rect->bodyId, (b2Vec2) { -entity_rect->width / 2, -entity_rect->height / 2 });
                 is_hovered = CheckCollisionPointRec(mouse_pos, {p.x, p.y, entity_rect->width, entity_rect->height});
             }
             break;
         case TRIANGLE:
             {
-                EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity->get());
+                EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity);
                 b2Vec2 p1 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { 0, 0 });
                 b2Vec2 p2 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v2.x, entity_tri->v2.y });
                 b2Vec2 p3 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v3.x, entity_tri->v3.y });
@@ -352,7 +426,7 @@ namespace LBR
             break;
         case CIRCLE:
             {
-                EntityCircle *entity_circle = dynamic_cast<EntityCircle*>(entity->get());
+                EntityCircle *entity_circle = dynamic_cast<EntityCircle*>(entity);
                 b2Vec2 p = b2Body_GetWorldPoint(entity_circle->bodyId, (b2Vec2) { 0, 0 });
                 is_hovered = CheckCollisionPointCircle(mouse_pos, { p.x, p.y }, entity_circle->radius);
             }
@@ -367,53 +441,80 @@ namespace LBR
     void World::DetermineHoveredEntity()
     {
         Vector2 mouse_pos = GetMousePosition();
-        if (hovered_entity == nullptr || !isHovered(hovered_entity, mouse_pos))
+        if (CheckCollisionPointRec(mouse_pos, menu_collision))
+        {
+            hovered_entity = nullptr;
+        }
+        else if (hovered_entity == nullptr || !isHovered(hovered_entity, mouse_pos))
         {
             hovered_entity = nullptr;
             for (auto &entity : entities)
             {
-                if (isHovered(&entity, mouse_pos))
-                    hovered_entity = &entity;
+                if (isHovered(entity.get(), mouse_pos))
+                    hovered_entity = entity.get();
             }
         }
     }
 
 
-    void DrawEntityByShape(std::unique_ptr<Entity> *entity, bool draw_border)
+    void World::MoveSelectedEntities() {
+
+    }
+
+
+    enum EntityStatus : uint8_t {
+        NONE,
+        HOVERED,
+        SELECTED
+    };
+
+
+    void DrawEntityByShape(Entity *entity, EntityStatus status)
     {
-        switch (entity->get()->shape)
+        switch (entity->shape)
         {
         case RECTANGLE:
-            if (draw_border)
-                dynamic_cast<EntityRectangle*>(entity->get())->DrawOutline();
+            if (status == HOVERED)
+                dynamic_cast<EntityRectangle*>(entity)->DrawOutline(COLOR_ENTITY_HOVERED);
+            else if (status == SELECTED)
+                dynamic_cast<EntityRectangle*>(entity)->DrawOutline(COLOR_ENTITY_SELECTED);
             else
-                dynamic_cast<EntityRectangle*>(entity->get())->Draw();
+                dynamic_cast<EntityRectangle*>(entity)->Draw();
             break;
         case TRIANGLE:
-            if (draw_border)
-                dynamic_cast<EntityTriangle*>(entity->get())->DrawOutline();
+            if (status == HOVERED)
+                dynamic_cast<EntityTriangle*>(entity)->DrawOutline(COLOR_ENTITY_HOVERED);
+            else if (status == SELECTED)
+                dynamic_cast<EntityTriangle*>(entity)->DrawOutline(COLOR_ENTITY_SELECTED);
             else
-                dynamic_cast<EntityTriangle*>(entity->get())->Draw();
+                dynamic_cast<EntityTriangle*>(entity)->Draw();
             break;
         case CIRCLE:
-            if (draw_border)
-                dynamic_cast<EntityCircle*>(entity->get())->DrawOutline();
+            if (status == HOVERED)
+                dynamic_cast<EntityCircle*>(entity)->DrawOutline(COLOR_ENTITY_HOVERED);
+            else if (status == SELECTED)
+                dynamic_cast<EntityCircle*>(entity)->DrawOutline(COLOR_ENTITY_SELECTED);
             else
-                dynamic_cast<EntityCircle*>(entity->get())->Draw();
+                dynamic_cast<EntityCircle*>(entity)->Draw();
             break;
         default:
             exit(1);
         }
     }
 
+
     void World::DrawEntities()
     {
         for (auto &entity : entities)
         {
-            DrawEntityByShape(&entity, false);
+            DrawEntityByShape(entity.get(), NONE);
+        }
+        for (auto &entity : selected_entities)
+        {
+            DrawEntityByShape(entity, SELECTED);
         }
         if (hovered_entity != nullptr)
-            DrawEntityByShape(hovered_entity, true);
+            DrawEntityByShape(hovered_entity, HOVERED);
     }
 
 
@@ -442,6 +543,7 @@ namespace LBR
             {
                 (this->*buttons[i].action)(x, y);
                 button_was_clicked = true;
+                menu_collision = {0,0,0,0};
             }
         }
         return button_was_clicked;

@@ -29,8 +29,21 @@ int main(void)
         // {
         //     pause = !pause;
         // }
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && world.hovered_entity != nullptr)
+        {
+            if (not (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_LEFT_CONTROL)))
+                world.selected_entities.clear();
+            world.selected_entities.push_back(world.hovered_entity);
+        }
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
         {
+            world.menu_collision = {0,0,0,0};
+            world.DetermineHoveredEntity();
+            if (world.hovered_entity != nullptr)
+            {
+                world.selected_entities.clear();
+                world.selected_entities.push_back(std::move(world.hovered_entity));
+            }
             world.menu_coordinats = { (float)GetMouseX(), (float)GetMouseY() };
             world.show_menu = true;
         }
@@ -53,7 +66,7 @@ int main(void)
                             , LBR::NORMAL
                             , LBR::DYNAMIC
                             , x - RAIN_RECTANGLE_SIZE / 2
-                            , y - RAIN_RECTANGLE_SIZE / 2 + RAIN_RECTANGLE_SIZE
+                            , y + RAIN_RECTANGLE_SIZE / 2
                             , RAIN_RECTANGLE_SIZE
                             , RAIN_RECTANGLE_SIZE
                 ));
@@ -76,7 +89,7 @@ int main(void)
                             , LBR::NORMAL
                             , LBR::DYNAMIC
                             , x - RAIN_CIRCLE_SIZE / 2
-                            , y - RAIN_CIRCLE_SIZE / 2 + RAIN_CIRCLE_SIZE
+                            , y + RAIN_CIRCLE_SIZE / 2
                             , RAIN_CIRCLE_SIZE
                 ));
                 break;
@@ -113,13 +126,15 @@ int main(void)
 
             if (world.show_menu) {
                 std::vector<LBR::Button> buttons {
-                    { "Copy"     , &LBR::World::CopyEntity, 0 }
-                   ,{ "Paste"    , &LBR::World::PasteEntity, 0 }
+                    { "Copy"     , &LBR::World::CopyEntities, !world.selected_entities.empty() }
+                   ,{ "Paste"    , &LBR::World::PasteEntities, !world.copy_buffer.empty() }
+                   ,{ "Delete"   , &LBR::World::DeleteEntities, !world.selected_entities.empty() }
                    ,{ "Rectangle", &LBR::World::SpawnRectangle }
                    ,{ "Triangle" , &LBR::World::SpawnTriangle }
                    ,{ "Circle"   , &LBR::World::SpawnCircle }
                 };
 
+                world.DetermineHoveredEntity();
                 if (world.GuiMenu(buttons, world.menu_coordinats.x, world.menu_coordinats.y, GUI_TEXT_SIZE * 8)
                 || IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
                 {

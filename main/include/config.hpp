@@ -12,11 +12,13 @@
 
 // Colors
 /// Entity color
-#define COLOR_ENTITY        DARKGRAY
-/// Entity border color (used on hovered and selected entities)
-#define COLOR_ENTITY_OUTLINE BLUE
+#define COLOR_ENTITY          DARKGRAY
+/// Entity outline color (used on hovered, selected and edited entities)
+#define COLOR_ENTITY_HOVERED  BLUE
+#define COLOR_ENTITY_SELECTED SKYBLUE
+#define COLOR_ENTITY_EDITED   DARKBLUE
 /// Window background color
-#define COLOR_BG            LIGHTGRAY
+#define COLOR_BG              LIGHTGRAY
 
 // GUI colors
 /// GUI border color
