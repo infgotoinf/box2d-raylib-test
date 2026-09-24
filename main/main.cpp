@@ -57,9 +57,9 @@ int main(void)
             float y = 0;
             float x = GetRandomValue(0, WINDOW_WIDTH);
 
-            switch (GetRandomValue(LBR::RECTANGLE, LBR::CIRCLE))
+            switch (GetRandomValue(1, 3))
             {
-            case LBR::RECTANGLE:
+            case 1:
                 rain_entities.push_back(
                         std::make_unique<LBR::EntityRectangle>(
                               world.world_id
@@ -71,7 +71,7 @@ int main(void)
                             , RAIN_RECTANGLE_SIZE
                 ));
                 break;
-            case LBR::TRIANGLE:
+            case 2:
                 rain_entities.push_back(
                         std::make_unique<LBR::EntityTriangle>(
                               world.world_id
@@ -82,7 +82,7 @@ int main(void)
                             , Vector2 {x + RAIN_RECTANGLE_SIZE / 2, y + RAIN_RECTANGLE_SIZE }
                 ));
                 break;
-            case LBR::CIRCLE:
+            case 3:
                 rain_entities.push_back(
                         std::make_unique<LBR::EntityCircle>(
                               world.world_id
@@ -105,21 +105,9 @@ int main(void)
         {
             ClearBackground(COLOR_BG);
 
-            for (auto& entity : rain_entities)
+            for (const auto& entity : rain_entities)
             {
-                switch (entity->shape)
-                {
-                case LBR::RECTANGLE:
-                    dynamic_cast<LBR::EntityRectangle*>(entity.get())->Draw();
-                    break;
-                case LBR::TRIANGLE:
-                    dynamic_cast<LBR::EntityTriangle*>(entity.get())->Draw();
-                    break;
-                case LBR::CIRCLE:
-                    dynamic_cast<LBR::EntityCircle*>(entity.get())->Draw();
-                default:
-                    break;
-                }
+                entity->Draw();
             }
 
             world.DrawEntities();

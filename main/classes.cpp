@@ -2,14 +2,13 @@
 
 
 #include "box2d/box2d.h"
-#include "box2d/math_functions.h"
+#include "box2d/id.h"
 #include "raylib.h"
-#include <cstdlib>
-#include <vector>
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
 #include <memory>
+#include <vector>
 
 #include "include/config.hpp"
 
@@ -17,14 +16,15 @@
 
 namespace LBR
 {
-    Entity::~Entity() {
+    Entity::~Entity()
+    {
         b2DestroyBody(bodyId);
     }
 
 
     void Entity::ChangeCoordinats(const float x, const float y)
     {
-        b2Body_SetTransform(bodyId, { x, y }, { 0, 0 });
+        b2Body_SetTransform(bodyId, { x, y }, b2Body_GetRotation(bodyId));
     }
 
 
@@ -47,7 +47,6 @@ namespace LBR
         this->color = color;
         this->behaviour = behaviour;
         this->type = type;
-        this->shape = RECTANGLE;
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
 
@@ -60,6 +59,22 @@ namespace LBR
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
+    }
+
+
+    std::unique_ptr<Entity> EntityRectangle::Clone() const
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, { 0, 0 });
+        return std::make_unique<EntityRectangle>(
+            b2Body_GetWorld(bodyId), behaviour, type, p.x, p.y, width, height, color
+        );
+    }
+
+
+    bool EntityRectangle::IsHovered(Vector2 mouse_pos)
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -width / 2, -height / 2 });
+        return CheckCollisionPointRec(mouse_pos, {p.x, p.y, width, height});
     }
 
 
@@ -93,7 +108,6 @@ namespace LBR
         this->color = color;
         this->behaviour = behaviour;
         this->type = type;
-        this->shape = TRIANGLE;
         this->centroid = { (this->v2.x + this->v3.x)/3, (this->v2.y + this->v3.y)/3 };
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -110,6 +124,26 @@ namespace LBR
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
+    }
+
+
+    std::unique_ptr<Entity> EntityTriangle::Clone() const
+    {
+        b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, { 0, 0 });
+        b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, { v2.x, v2.y });
+        b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, { v3.x, v3.y });
+        return std::make_unique<EntityTriangle>(
+            b2Body_GetWorld(bodyId), behaviour, type, Vector2{ p1.x, p1.y }, Vector2{ p2.x, p2.y }, Vector2{ p3.x, p3.y }, color
+        );
+    }
+
+
+    bool EntityTriangle::IsHovered(Vector2 mouse_pos)
+    {
+        b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+        b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
+        b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
+        return CheckCollisionPointTriangle(mouse_pos, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y });
     }
 
 
@@ -185,7 +219,6 @@ namespace LBR
         this->color = color;
         this->behaviour = behaviour;
         this->type = type;
-        this->shape = CIRCLE;
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.position = (b2Vec2){ x, y };
@@ -197,6 +230,22 @@ namespace LBR
         bodyId = b2CreateBody(world_id, &bodyDef);
         b2ShapeDef shapeDef = b2DefaultShapeDef();
         b2CreateCircleShape(bodyId, &shapeDef, &circle);
+    }
+
+
+    std::unique_ptr<Entity> EntityCircle::Clone() const
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, { 0, 0 });
+        return std::make_unique<EntityCircle>(
+            b2Body_GetWorld(bodyId), behaviour, type, p.x, p.y, radius, color
+        );
+    }
+
+
+    bool EntityCircle::IsHovered(Vector2 mouse_pos)
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+        return CheckCollisionPointCircle(mouse_pos, { p.x, p.y }, radius);
     }
 
 
@@ -268,9 +317,10 @@ namespace LBR
     void World::CopyEntities(const float x, const float y)
     {
         copy_buffer.clear();
-        for (auto &entity : selected_entities)
+        for (const auto &entity : selected_entities)
         {
-            copy_buffer.push_back(entity);
+            copy_buffer.push_back(entity->Clone());
+            b2Body_Disable(copy_buffer.back()->bodyId);
         }
     }
 
@@ -279,78 +329,30 @@ namespace LBR
     {
         std::list<Entity*> new_selected_entities;
         b2Vec2 middle_of_entities = { 0, 0 };
-        for (auto &entity : copy_buffer)
+        for (const auto &entity : copy_buffer)
         {
-            new_selected_entities.push_back(entity);
+            new_selected_entities.push_back(entity.get());
             middle_of_entities += b2Body_GetWorldPoint(entity->bodyId, (b2Vec2) { 0, 0 });
         }
 
         selected_entities.clear();
         middle_of_entities.x /= new_selected_entities.size();
         middle_of_entities.y /= new_selected_entities.size();
-        for (auto &entity : new_selected_entities)
+        for (const auto &entity : new_selected_entities)
         {
             b2Vec2 entity_middle = b2Body_GetWorldPoint(entity->bodyId, (b2Vec2) { 0, 0 });
             b2Vec2 new_entity_middle = { entity_middle.x - middle_of_entities.x + x
                                        , entity_middle.y - middle_of_entities.y + y };
-            switch (entity->shape) {
-            case RECTANGLE:
-                {
-                    EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity);
-                    entities.push_back(std::make_unique<EntityRectangle>(
-                             world_id
-                            ,entity_rect->behaviour
-                            ,entity_rect->type
-                            ,new_entity_middle.x
-                            ,new_entity_middle.y
-                            ,entity_rect->width
-                            ,entity_rect->height
-                    ));
-                }
-                break;
-            case TRIANGLE:
-                {
-                    EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity);
-                    b2Vec2 v1p = entity_middle;
-                    b2Vec2 v2p = b2Body_GetWorldPoint(entity->bodyId, b2Vec2{ entity_tri->v2.x, entity_tri->v2.y });
-                    b2Vec2 v3p = b2Body_GetWorldPoint(entity->bodyId, b2Vec2{ entity_tri->v3.x, entity_tri->v3.y });
-                    entities.push_back(std::make_unique<EntityTriangle>(
-                             world_id
-                            ,entity_tri->behaviour
-                            ,entity_tri->type
-                            ,Vector2{ v1p.x - middle_of_entities.x + x
-                                    , v1p.y - middle_of_entities.y + y }
-                            ,Vector2{ v2p.x - middle_of_entities.x + x
-                                    , v2p.y - middle_of_entities.y + y }
-                            ,Vector2{ v3p.x - middle_of_entities.x + x
-                                    , v3p.y - middle_of_entities.y + y }
-                    ));
-                }
-                break;
-            case CIRCLE:
-                {
-                    EntityCircle *entity_circ = dynamic_cast<EntityCircle*>(entity);
-                    entities.push_back(std::make_unique<EntityCircle>(
-                             world_id
-                            ,entity_circ->behaviour
-                            ,entity_circ->type
-                            ,new_entity_middle.x
-                            ,new_entity_middle.y
-                            ,entity_circ->radius
-                    ));
-                }
-                break;
-            default:
-                exit(1);
-            }
-            selected_entities.push_back(entities.back().get());
+
+            entity->ChangeCoordinats(new_entity_middle.x, new_entity_middle.y);
+            entities.push_back(entity->Clone());
         }
     }
 
 
     void World::DeleteEntities(const float x, const float y)
     {
-        for (auto &entity : selected_entities)
+        for (const auto &entity : selected_entities)
         {
             entities.remove_if([entity](const std::unique_ptr<Entity>& ptr) {
                 return ptr.get() == entity;
@@ -403,41 +405,6 @@ namespace LBR
     }
 
 
-    bool isHovered(Entity *entity, Vector2 mouse_pos)
-    {
-        bool is_hovered = false;
-        switch (entity->shape)
-        {
-        case RECTANGLE:
-            {
-                EntityRectangle *entity_rect = dynamic_cast<EntityRectangle*>(entity);
-                b2Vec2 p = b2Body_GetWorldPoint(entity_rect->bodyId, (b2Vec2) { -entity_rect->width / 2, -entity_rect->height / 2 });
-                is_hovered = CheckCollisionPointRec(mouse_pos, {p.x, p.y, entity_rect->width, entity_rect->height});
-            }
-            break;
-        case TRIANGLE:
-            {
-                EntityTriangle *entity_tri = dynamic_cast<EntityTriangle*>(entity);
-                b2Vec2 p1 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { 0, 0 });
-                b2Vec2 p2 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v2.x, entity_tri->v2.y });
-                b2Vec2 p3 = b2Body_GetWorldPoint(entity_tri->bodyId, (b2Vec2) { entity_tri->v3.x, entity_tri->v3.y });
-                is_hovered = CheckCollisionPointTriangle(mouse_pos, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y });
-            }
-            break;
-        case CIRCLE:
-            {
-                EntityCircle *entity_circle = dynamic_cast<EntityCircle*>(entity);
-                b2Vec2 p = b2Body_GetWorldPoint(entity_circle->bodyId, (b2Vec2) { 0, 0 });
-                is_hovered = CheckCollisionPointCircle(mouse_pos, { p.x, p.y }, entity_circle->radius);
-            }
-            break;
-        default:
-            break;
-        }
-        return is_hovered;
-    }
-
-
     void World::DetermineHoveredEntity()
     {
         Vector2 mouse_pos = GetMousePosition();
@@ -445,14 +412,12 @@ namespace LBR
         {
             hovered_entity = nullptr;
         }
-        else if (hovered_entity == nullptr || !isHovered(hovered_entity, mouse_pos))
+        else if (hovered_entity == nullptr || not hovered_entity->IsHovered(mouse_pos))
         {
             hovered_entity = nullptr;
-            for (auto &entity : entities)
-            {
-                if (isHovered(entity.get(), mouse_pos))
+            for (const auto &entity : entities)
+                if (entity->IsHovered(mouse_pos))
                     hovered_entity = entity.get();
-            }
         }
     }
 
@@ -462,59 +427,16 @@ namespace LBR
     }
 
 
-    enum EntityStatus : uint8_t {
-        NONE,
-        HOVERED,
-        SELECTED
-    };
-
-
-    void DrawEntityByShape(Entity *entity, EntityStatus status)
-    {
-        switch (entity->shape)
-        {
-        case RECTANGLE:
-            if (status == HOVERED)
-                dynamic_cast<EntityRectangle*>(entity)->DrawOutline(COLOR_ENTITY_HOVERED);
-            else if (status == SELECTED)
-                dynamic_cast<EntityRectangle*>(entity)->DrawOutline(COLOR_ENTITY_SELECTED);
-            else
-                dynamic_cast<EntityRectangle*>(entity)->Draw();
-            break;
-        case TRIANGLE:
-            if (status == HOVERED)
-                dynamic_cast<EntityTriangle*>(entity)->DrawOutline(COLOR_ENTITY_HOVERED);
-            else if (status == SELECTED)
-                dynamic_cast<EntityTriangle*>(entity)->DrawOutline(COLOR_ENTITY_SELECTED);
-            else
-                dynamic_cast<EntityTriangle*>(entity)->Draw();
-            break;
-        case CIRCLE:
-            if (status == HOVERED)
-                dynamic_cast<EntityCircle*>(entity)->DrawOutline(COLOR_ENTITY_HOVERED);
-            else if (status == SELECTED)
-                dynamic_cast<EntityCircle*>(entity)->DrawOutline(COLOR_ENTITY_SELECTED);
-            else
-                dynamic_cast<EntityCircle*>(entity)->Draw();
-            break;
-        default:
-            exit(1);
-        }
-    }
-
-
     void World::DrawEntities()
     {
-        for (auto &entity : entities)
-        {
-            DrawEntityByShape(entity.get(), NONE);
-        }
-        for (auto &entity : selected_entities)
-        {
-            DrawEntityByShape(entity, SELECTED);
-        }
+        for (const auto &entity : entities)
+            entity->Draw();
+
+        for (const auto &entity : selected_entities)
+            entity->DrawOutline(COLOR_ENTITY_SELECTED);
+
         if (hovered_entity != nullptr)
-            DrawEntityByShape(hovered_entity, HOVERED);
+            hovered_entity->DrawOutline(COLOR_ENTITY_HOVERED);
     }
 
 
@@ -543,7 +465,7 @@ namespace LBR
             {
                 (this->*buttons[i].action)(x, y);
                 button_was_clicked = true;
-                menu_collision = {0,0,0,0};
+                menu_collision = { 0, 0, 0, 0 };
             }
         }
         return button_was_clicked;

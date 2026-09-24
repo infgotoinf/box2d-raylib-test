@@ -14,14 +14,6 @@
 
 namespace LBR
 {
-
-    enum EntityShape : uint8_t {
-        RECTANGLE,
-        TRIANGLE,
-        CIRCLE,
-    };
-
-
     enum EntityBehaviour : uint8_t {
         NORMAL,
         KILLING,
@@ -43,11 +35,12 @@ namespace LBR
     public:
         b2BodyId bodyId;
         Color color;
-        EntityShape shape;
         EntityBehaviour behaviour;
         EntityType type;
 
         ~Entity();
+        virtual std::unique_ptr<Entity> Clone() const = 0;
+        virtual bool IsHovered(Vector2 mouse_pos) = 0;
         virtual void Draw() = 0;
         virtual void DrawOutline(Color outline_color) = 0;
         void ChangeCoordinats(const float x, const float y);
@@ -61,6 +54,8 @@ namespace LBR
         float height;
 
         EntityRectangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float width, float height, Color color = COLOR_ENTITY);
+        std::unique_ptr<Entity> Clone() const override;
+        bool IsHovered(Vector2 mouse_pos) override;
         void Draw() override;
         void DrawOutline(Color outline_color) override;
     };
@@ -74,6 +69,8 @@ namespace LBR
         Vector2 centroid;
 
         EntityTriangle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, Vector2 v1, Vector2 v2, Vector2 v3, Color color = COLOR_ENTITY);
+        std::unique_ptr<Entity> Clone() const override;
+        bool IsHovered(Vector2 mouse_pos) override;
         void Draw() override;
         void DrawOutline(Color outline_color) override;
     };
@@ -85,6 +82,8 @@ namespace LBR
         float radius;
 
         EntityCircle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float radius, Color color = COLOR_ENTITY);
+        std::unique_ptr<Entity> Clone() const override;
+        bool IsHovered(Vector2 mouse_pos) override;
         void Draw() override;
         void DrawOutline(Color outline_color) override;
     };
@@ -99,7 +98,7 @@ namespace LBR
     public:
         b2WorldId world_id;
         std::list<std::unique_ptr<Entity>> entities;
-        std::list<Entity*> copy_buffer;
+        std::list<std::unique_ptr<Entity>> copy_buffer;
         std::list<Entity*> selected_entities;
         Entity *hovered_entity = nullptr;
         Rectangle menu_collision;
