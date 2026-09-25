@@ -35,6 +35,10 @@ int main(void)
                 world.selected_entities.clear();
             world.selected_entities.push_back(world.hovered_entity);
         }
+        if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && world.hovered_entity != nullptr && not world.selected_entities.empty())
+        {
+            world.MoveSelectedEntities();
+        }
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
         {
             world.menu_collision = {0,0,0,0};

@@ -2,7 +2,7 @@
 
 
 #include "box2d/box2d.h"
-#include "box2d/id.h"
+#include "box2d/math_functions.h"
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -25,6 +25,7 @@ namespace LBR
     void Entity::ChangeCoordinats(const float x, const float y)
     {
         b2Body_SetTransform(bodyId, { x, y }, b2Body_GetRotation(bodyId));
+        // b2Body_SetLinearVelocity(bodyId, { x, y });
     }
 
 
@@ -422,8 +423,14 @@ namespace LBR
     }
 
 
-    void World::MoveSelectedEntities() {
-
+    void World::MoveSelectedEntities()
+    {
+        Vector2 mouse_delta = GetMouseDelta();
+        for (const auto& entity : selected_entities)
+        {
+            b2Vec2 p = b2Body_GetWorldPoint(entity->bodyId, { 0, 0 });
+            entity->ChangeCoordinats(p.x + mouse_delta.x, p.y + mouse_delta.y);
+        }
     }
 
 
