@@ -43,6 +43,7 @@ namespace LBR
         virtual bool IsHovered(Vector2 mouse_pos) = 0;
         virtual void Draw() = 0;
         virtual void DrawOutline(Color outline_color) = 0;
+        virtual void DrawTransform() = 0;
         void ChangeCoordinats(const float x, const float y);
     };
 
@@ -58,6 +59,7 @@ namespace LBR
         bool IsHovered(Vector2 mouse_pos) override;
         void Draw() override;
         void DrawOutline(Color outline_color) override;
+        void DrawTransform() override;
     };
 
 
@@ -73,6 +75,7 @@ namespace LBR
         bool IsHovered(Vector2 mouse_pos) override;
         void Draw() override;
         void DrawOutline(Color outline_color) override;
+        void DrawTransform() override;
     };
 
 
@@ -86,6 +89,7 @@ namespace LBR
         bool IsHovered(Vector2 mouse_pos) override;
         void Draw() override;
         void DrawOutline(Color outline_color) override;
+        void DrawTransform() override;
     };
 
 

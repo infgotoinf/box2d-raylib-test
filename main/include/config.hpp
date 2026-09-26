@@ -1,43 +1,47 @@
 #pragma once
 
+#include "raylib.h"
 
-#define WINDOW_WIDTH  640.0f
-#define WINDOW_HEIGHT 640.0f
-#define FPS 60
-#define PIXELS_PER_METER 64
-// #define RANDOM_SPREAD 75
-// #define RANDOM_COLOR (uint8_t)(GetRandomValue(0, 10) * 10 + 155)
-// #define DEFAULT_COLOR (Color){ RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR, 255 }
+
+
+constexpr static float WINDOW_WIDTH  =  640.0f;
+constexpr static float WINDOW_HEIGHT =  640.0f;
+constexpr static int FPS = 60;
+constexpr static int PIXELS_PER_METER = 64;
+// constexpr static int RANDOM_SPREAD = 75;
+// constexpr static int RANDOM_COLOR =  (uint8_t)(GetRandomValue(0, 10) * 10 + 15);
+// constexpr static int DEFAULT_COLOR =  (Color){ RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR, 255};
 
 
 // Colors
 /// Entity color
-#define COLOR_ENTITY          DARKGRAY
+constexpr static Color COLOR_ENTITY          = DARKGRAY;
 /// Entity outline color (used on hovered, selected and edited entities)
-#define COLOR_ENTITY_HOVERED  BLUE
-#define COLOR_ENTITY_SELECTED SKYBLUE
-#define COLOR_ENTITY_EDITED   DARKBLUE
+constexpr static Color COLOR_ENTITY_HOVERED  = BLUE;
+constexpr static Color COLOR_ENTITY_SELECTED = SKYBLUE;
+constexpr static Color COLOR_ENTITY_EDITED   = DARKBLUE;
 /// Window background color
-#define COLOR_BG              LIGHTGRAY
+constexpr static Color COLOR_BG              = LIGHTGRAY;
 
 // GUI colors
 /// GUI border color
-// #define GUI_COLOR_ACCENT               GREEN
-// #define GUI_COLOR_BUTTON_TEXT          GREEN
-// #define GUI_COLOR_BUTTON_BG            RAYWHITE
-// #define GUI_COLOR_BUTTON_DISABLED_TEXT DARKGRAY
-// #define GUI_COLOR_BUTTON_DISABLED_BG   GRAY
-// #define GUI_COLOR_BUTTON_HOVERED_TEXT  LIME
-// #define GUI_COLOR_BUTTON_HOVERED_BG    WHITE
-// #define GUI_COLOR_BUTTON_PUSHED_TEXT   DARKGREEN
-// #define GUI_COLOR_BUTTON_PUSHED_BG     GRAY
-#define GUI_TEXT_SIZE 24
-#define GUI_BUTTON_MARGIN 0
+// constexpr static Color GUI_COLOR_ACCENT               = GREEN;
+// constexpr static Color GUI_COLOR_BUTTON_TEXT          = GREEN;
+// constexpr static Color GUI_COLOR_BUTTON_BG            = RAYWHITE;
+// constexpr static Color GUI_COLOR_BUTTON_DISABLED_TEXT = DARKGRAY;
+// constexpr static Color GUI_COLOR_BUTTON_DISABLED_BG   = GRAY;
+// constexpr static Color GUI_COLOR_BUTTON_HOVERED_TEXT  = LIME;
+// constexpr static Color GUI_COLOR_BUTTON_HOVERED_BG    = WHITE;
+// constexpr static Color GUI_COLOR_BUTTON_PUSHED_TEXT   = DARKGREEN;
+// constexpr static Color GUI_COLOR_BUTTON_PUSHED_BG     = GRAY;
+constexpr static int GUI_TEXT_SIZE = 24;
+constexpr static int GUI_BUTTON_MARGIN = 0;
 
-#define ENTITY_OUTLINE_SIZE 3.0f
+constexpr static float ENTITY_OUTLINE_SIZE =  3.0f;
+constexpr static float ENTITY_TRANSFORM_SIZE =  10.0f;
 
-#define DEFAULT_RECTANGLE_WIDTH 125.0f
-#define DEFAULT_RECTANGLE_HEIGHT 75.0f
-#define DEFAULT_CIRCLE_RADIUS 50.0f
-#define RAIN_RECTANGLE_SIZE 15.0f
-#define RAIN_CIRCLE_SIZE 7.5f
+constexpr static float DEFAULT_RECTANGLE_WIDTH =  125.0f;
+constexpr static float DEFAULT_RECTANGLE_HEIGHT =  75.0f;
+constexpr static float DEFAULT_CIRCLE_RADIUS =  50.0f;
+constexpr static float RAIN_RECTANGLE_SIZE =  15.0f;
+constexpr static float RAIN_CIRCLE_SIZE =  7.5f;

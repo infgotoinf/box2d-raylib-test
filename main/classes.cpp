@@ -2,7 +2,6 @@
 
 
 #include "box2d/box2d.h"
-#include "box2d/math_functions.h"
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -100,6 +99,36 @@ namespace LBR
 
         DrawRectanglePro({p_border.x, p_border.y, width + ENTITY_OUTLINE_SIZE, height + ENTITY_OUTLINE_SIZE}, {0, 0}, RAD2DEG * radians, outline_color);
         DrawRectanglePro({p.x, p.y, width - ENTITY_OUTLINE_SIZE, height - ENTITY_OUTLINE_SIZE}, {0, 0}, RAD2DEG * radians, color);
+    }
+
+
+    void EntityRectangle::DrawTransform()
+    {
+        b2Rot rotation = b2Body_GetRotation(bodyId);
+        float radians = b2Rot_GetAngle(rotation);
+
+        // Verticies
+        b2Vec2 v1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) {  (width) / 2,  (height) / 2 });
+        b2Vec2 v2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) {  (width) / 2, -(height) / 2 });
+        b2Vec2 v3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width) / 2,  (height) / 2 });
+        b2Vec2 v4 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { -(width) / 2, -(height) / 2 });
+
+        DrawRectanglePro({v1.x - ENTITY_TRANSFORM_SIZE / 2, v1.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_SELECTED);
+        DrawRectanglePro({v2.x - ENTITY_TRANSFORM_SIZE / 2, v2.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_SELECTED);
+        DrawRectanglePro({v3.x - ENTITY_TRANSFORM_SIZE / 2, v3.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_SELECTED);
+        DrawRectanglePro({v4.x - ENTITY_TRANSFORM_SIZE / 2, v4.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE}, {0, 0}, RAD2DEG * radians, COLOR_ENTITY_SELECTED);
+
+        // You can add this later for rotation
+        // Side centers
+        // b2Vec2 c1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { centroid.x + width / 2, centroid.y });
+        // b2Vec2 c2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { centroid.x - width / 2, centroid.y });
+        // b2Vec2 c3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { centroid.x, centroid.y + height / 2 });
+        // b2Vec2 c4 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { centroid.x, centroid.y - height / 2 });
+
+        // DrawCircle(c1.x, c1.y, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        // DrawCircle(c2.x, c2.y, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        // DrawCircle(c3.x, c3.y, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        // DrawCircle(c4.x, c4.y, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
     }
 
 
@@ -214,6 +243,18 @@ namespace LBR
     }
 
 
+    void EntityTriangle::DrawTransform()
+    {
+        b2Vec2 p1 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+        b2Vec2 p2 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v2.x, v2.y });
+        b2Vec2 p3 = b2Body_GetWorldPoint(bodyId, (b2Vec2) { v3.x, v3.y });
+
+        DrawRectangle(p1.x - ENTITY_TRANSFORM_SIZE / 2, p1.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        DrawRectangle(p2.x - ENTITY_TRANSFORM_SIZE / 2, p2.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        DrawRectangle(p3.x - ENTITY_TRANSFORM_SIZE / 2, p3.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+    }
+
+
     EntityCircle::EntityCircle(b2WorldId world_id, EntityBehaviour behaviour, EntityType type, float x, float y, float radius, Color color)
             : radius(radius)
     {
@@ -249,14 +290,14 @@ namespace LBR
         return CheckCollisionPointCircle(mouse_pos, { p.x, p.y }, radius);
     }
 
+    // For some reason without ADDITIONAL_CIRCLE_SIZE physical body size of a
+    // circle seems to be a little bigger that what's rendered.
+    constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
 
     void EntityCircle::Draw()
     {
         b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
 
-        // For some reason without ADDITIONAL_CIRCLE_SIZE physical body size of a
-        // circle seems to be a little bigger that what's rendered.
-        constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
         DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE, color);
     }
 
@@ -265,9 +306,19 @@ namespace LBR
     {
         b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
 
-        constexpr static float ADDITIONAL_CIRCLE_SIZE = 0.2f;
         DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE + ENTITY_OUTLINE_SIZE / 2, outline_color);
         DrawCircle(p.x, p.y, radius + ADDITIONAL_CIRCLE_SIZE - ENTITY_OUTLINE_SIZE / 2, color);
+    }
+
+
+    void EntityCircle::DrawTransform()
+    {
+        b2Vec2 p = b2Body_GetWorldPoint(bodyId, (b2Vec2) { 0, 0 });
+
+        DrawRectangle(p.x + (radius + ENTITY_OUTLINE_SIZE / 2) - ENTITY_TRANSFORM_SIZE / 2, p.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        DrawRectangle(p.x - (radius + ENTITY_OUTLINE_SIZE / 2) - ENTITY_TRANSFORM_SIZE / 2, p.y - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        DrawRectangle(p.x - ENTITY_TRANSFORM_SIZE / 2, p.y + (radius + ENTITY_OUTLINE_SIZE / 2) - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
+        DrawRectangle(p.x - ENTITY_TRANSFORM_SIZE / 2, p.y - (radius + ENTITY_OUTLINE_SIZE / 2) - ENTITY_TRANSFORM_SIZE / 2, ENTITY_TRANSFORM_SIZE, ENTITY_TRANSFORM_SIZE, COLOR_ENTITY_SELECTED);
     }
 
 
@@ -443,7 +494,11 @@ namespace LBR
             entity->DrawOutline(COLOR_ENTITY_SELECTED);
 
         if (hovered_entity != nullptr)
+        {
             hovered_entity->DrawOutline(COLOR_ENTITY_HOVERED);
+            if (not selected_entities.empty())
+                hovered_entity->DrawTransform();
+        }
     }
 
 
